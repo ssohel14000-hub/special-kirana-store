@@ -1,114 +1,136 @@
-
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Special Kirana Store</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background: linear-gradient(to right, #e8f5e9, #fffde7);
-        }
-        header {
-            background-color: #2e7d32;
-            color: white;
-            padding: 15px;
-            text-align: center;
-            font-size: 22px;
-            font-weight: bold;
-        }
-        .hero {
-            text-align: center;
-            padding: 40px 20px;
-        }
-        .hero h2 {
-            color: #2e7d32;
-        }
-        .products {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            padding: 20px;
-        }
-        .card {
-            background: white;
-            padding: 15px;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-        .price {
-            font-weight: bold;
-            color: #000;
-        }
-        .btn {
-            background-color: #fbc02d;
-            padding: 8px 12px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            margin-top: 8px;
-        }
-        .whatsapp {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background-color: #25d366;
-            color: white;
-            padding: 12px 15px;
-            border-radius: 50%;
-            text-decoration: none;
-            font-size: 20px;
-        }
-        footer {
-            text-align: center;
-            padding: 15px;
-            background: #2e7d32;
-            color: white;
-        }
-    </style>
+<title>Special Kirana Store</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background:#f4f4f4;
+}
+
+header{
+background:#2e7d32;
+color:white;
+padding:15px;
+text-align:center;
+}
+
+nav{
+background:#1b5e20;
+padding:10px;
+text-align:center;
+}
+
+nav a{
+color:white;
+text-decoration:none;
+margin:15px;
+font-weight:bold;
+}
+
+section{
+padding:30px;
+text-align:center;
+}
+
+.products{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+gap:20px;
+}
+
+.card{
+background:white;
+padding:15px;
+border-radius:10px;
+box-shadow:0 0 10px rgba(0,0,0,0.1);
+}
+
+button{
+background:#ff9800;
+color:white;
+border:none;
+padding:8px 15px;
+border-radius:5px;
+cursor:pointer;
+}
+
+footer{
+background:#2e7d32;
+color:white;
+padding:15px;
+text-align:center;
+}
+
+</style>
 </head>
+
 <body>
 
 <header>
-    🛒 Special Kirana Store
+<h1>Special Kirana Store</h1>
 </header>
 
-<section class="hero">
-    <h2>Fresh Grocery at Best Price</h2>
-    <p>Fast Delivery | Cash on Delivery | UPI Available</p>
+<nav>
+<a href="#home">Home</a>
+<a href="#about">About</a>
+<a href="#products">Products</a>
+<a href="#contact">Contact</a>
+</nav>
+
+<section id="home">
+<h2>Fresh Grocery at Best Price</h2>
+<p>Fast Delivery | Cash on Delivery | UPI Available</p>
 </section>
 
-<section class="products">
-    <div class="card">
-        <h3>Aashirvaad Atta 5kg</h3>
-        <p class="price">₹280</p>
-        <button class="btn">Add to Cart</button>
-    </div>
-    <div class="card">
-        <h3>Basmati Chawal 1kg</h3>
-        <p class="price">₹120</p>
-        <button class="btn">Add to Cart</button>
-    </div>
-    <div class="card">
-        <h3>Toor Daal 1kg</h3>
-        <p class="price">₹140</p>
-        <button class="btn">Add to Cart</button>
-    </div>
-    <div class="card">
-        <h3>Fortune Oil 1L</h3>
-        <p class="price">₹160</p>
-        <button class="btn">Add to Cart</button>
-    </div>
+<section id="about">
+<h2>About Us</h2>
+<p>Special Kirana Store provides fresh grocery items at affordable prices in Baghniabari area. Quality and customer satisfaction is our priority.</p>
 </section>
 
-<a class="whatsapp" href="https://wa.me/919999999999" target="_blank">📞</a>
+<section id="products">
+<h2>Our Products</h2>
+<div class="products">
+
+<div class="card">
+<h3>Aashirvaad Atta 5kg</h3>
+<p>₹280</p>
+<button>Order Now</button>
+</div>
+
+<div class="card">
+<h3>Basmati Chawal 1kg</h3>
+<p>₹120</p>
+<button>Order Now</button>
+</div>
+
+<div class="card">
+<h3>Toor Daal 1kg</h3>
+<p>₹140</p>
+<button>Order Now</button>
+</div>
+
+<div class="card">
+<h3>Fortune Oil 1L</h3>
+<p>₹160</p>
+<button>Order Now</button>
+</div>
+
+</div>
+</section>
+
+<section id="contact">
+<h2>Contact Us</h2>
+<p>📍 Baghniabari, Bihar</p>
+<p>📞 +91 9876543210</p>
+<p>WhatsApp Orders Available</p>
+</section>
 
 <footer>
-    © 2026 Special Kirana Store | Baghniabari, Bihar
+© 2026 Special Kirana Store
 </footer>
 
 </body>
