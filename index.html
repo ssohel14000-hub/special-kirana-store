@@ -215,3 +215,46 @@ transition:0.3s;
 .card button:hover{
 background:#1b5e20;
 }
+/* Navbar glass effect */
+header{
+backdrop-filter: blur(8px);
+background: rgba(255,255,255,0.9);
+}
+
+/* Hero typography */
+.hero h1{
+font-size:38px;
+letter-spacing:1px;
+}
+
+.hero p{
+font-size:18px;
+opacity:0.9;
+}
+
+/* Hero button glow */
+.hero button{
+box-shadow:0 8px 20px rgba(0,0,0,0.2);
+transition:0.3s;
+}
+
+.hero button:hover{
+transform:scale(1.05);
+}
+
+/* Section heading style */
+.section h2{
+font-size:28px;
+color:#2e7d32;
+position:relative;
+}
+
+.section h2::after{
+content:'';
+width:60px;
+height:4px;
+background:#ff9800;
+display:block;
+margin:10px auto;
+border-radius:5px;
+}
