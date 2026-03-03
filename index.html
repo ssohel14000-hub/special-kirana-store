@@ -6,44 +6,53 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body{margin:0;font-family:Arial;background:#f4f8f4;transition:0.3s}
-.dark{background:#121212;color:white}
-header{background:#2e7d32;color:white;padding:10px;display:flex;justify-content:space-between;align-items:center}
-.logo{height:40px}
-.hero{position:relative;height:150px;text-align:center;color:white;overflow:hidden}
-.hero img{width:100%;height:150px;object-fit:cover;position:absolute;z-index:-1}
-.hero-overlay{background:rgba(0,0,0,0.5);height:100%;display:flex;align-items:center;justify-content:center}
-.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;padding:10px}
-.card{background:white;padding:10px;border-radius:8px;box-shadow:0 3px 8px rgba(0,0,0,0.1)}
+body{margin:0;font-family:Arial;background:#f2f7f2;transition:.3s}
+.dark{background:#121212;color:#fff}
+header{background:#2e7d32;color:white;padding:12px;display:flex;justify-content:space-between;align-items:center}
+button{background:#2e7d32;color:#fff;border:none;padding:6px 10px;border-radius:6px;margin:3px;cursor:pointer}
+.hero{height:180px;background:url('https://images.pexels.com/photos/264636/pexels-photo-264636.jpeg') center/cover;display:flex;align-items:center;justify-content:center;color:white}
+.hero h2{background:rgba(0,0,0,.5);padding:10px 20px;border-radius:10px}
+.controls{text-align:center;margin:10px}
+input{padding:6px;margin:5px;border-radius:6px;border:1px solid #ccc}
+.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;padding:10px}
+.card{background:#fff;padding:12px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,.1)}
 .dark .card{background:#1e1e1e}
-button{background:#2e7d32;color:white;border:none;padding:5px 8px;border-radius:5px;margin-top:4px;cursor:pointer}
-.cart-box{position:fixed;bottom:15px;right:15px;background:#2e7d32;color:white;padding:10px;border-radius:10px;cursor:pointer}
-.popup{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);justify-content:center;align-items:center}
-.popup-content{background:white;width:95%;max-width:360px;padding:15px;border-radius:10px;max-height:90vh;overflow:auto}
+.stock-low{color:red;font-size:12px}
+.cart-box{position:fixed;bottom:15px;right:15px;background:#2e7d32;color:white;padding:12px;border-radius:12px;cursor:pointer}
+.popup{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);justify-content:center;align-items:center}
+.popup-content{background:white;width:95%;max-width:380px;padding:15px;border-radius:12px;max-height:90vh;overflow:auto}
 .dark .popup-content{background:#1e1e1e;color:white}
-input{padding:5px;margin:5px 0;width:95%}
-.dashboard{margin:10px;background:white;padding:10px;border-radius:8px}
+.hidden{display:none}
+.dashboard{background:white;margin:10px;padding:10px;border-radius:10px}
 .dark .dashboard{background:#1e1e1e}
 </style>
 </head>
-
 <body>
 
 <header>
-<img id="storeLogo" class="logo">
+<b>🛒 Special Kirana Store</b>
 <div>
 <button onclick="toggleDark()">🌙</button>
-<input type="file" onchange="uploadLogo(event)">
+<button onclick="login()">Login</button>
 </div>
 </header>
 
 <div class="hero">
-<img src="https://images.pexels.com/photos/264636/pexels-photo-264636.jpeg">
-<div class="hero-overlay"><h3>Special Kirana Store</h3></div>
+<h2>Fresh Grocery • Best Price</h2>
 </div>
 
 <div class="dashboard">
-<b>📊 Today Sales: ₹<span id="dailySales">0</span></b>
+📊 Today Sales: ₹<span id="sales">0</span>
+</div>
+
+<div class="controls">
+<input type="text" id="search" placeholder="Search product..." onkeyup="render()">
+</div>
+
+<div id="adminPanel" class="controls hidden">
+<button onclick="addProduct()">Add Product</button>
+<button onclick="resetSales()">Reset Sales</button>
+<button onclick="logout()">Logout</button>
 </div>
 
 <div class="products" id="productList"></div>
@@ -54,14 +63,14 @@ Cart ₹<span id="cartTotal">0</span>
 
 <div class="popup" id="cartPopup">
 <div class="popup-content">
-<h3>Your Cart</h3>
+<h3>Cart Receipt</h3>
 <ul id="cartItems"></ul>
-<b>Total: ₹<span id="popupTotal">0</span></b>
+<b>Total: ₹<span id="popupTotal">0</span></b><br>
 
-<input type="text" id="custName" placeholder="Customer Name">
-<input type="text" id="custPhone" placeholder="Phone Number">
+<input id="custName" placeholder="Customer Name">
+<input id="custPhone" placeholder="Phone Number">
 
-<button onclick="placeOrder()">Place Order</button>
+<button onclick="placeOrder()">Order on WhatsApp</button>
 <button onclick="clearCart()">Clear Cart</button>
 <button onclick="closeCart()">Close</button>
 </div>
@@ -73,120 +82,161 @@ Cart ₹<span id="cartTotal">0</span>
 </div>
 
 <script>
-let whatsappNumber="919876543210";
-let cart=[];
-let dailySales=Number(localStorage.getItem("sales"))||0;
-let orders=JSON.parse(localStorage.getItem("orders"))||[];
-let darkMode=localStorage.getItem("dark");
+let admin=false;
+let whatsapp="919876543210";
 
-if(darkMode==="on"){document.body.classList.add("dark")}
-
-document.getElementById("dailySales").innerText=dailySales;
-
-let items=[
-{name:"Atta",price:30},{name:"Rice",price:55},{name:"Dal",price:120},
-{name:"Sugar",price:45},{name:"Salt",price:25},{name:"Oil",price:140},
-{name:"Tea",price:220},{name:"Milk Powder",price:320},{name:"Biscuits",price:30},
-{name:"Maggi",price:15},{name:"Soap",price:35},{name:"Shampoo",price:150},
-{name:"Toothpaste",price:90},{name:"Detergent",price:110},{name:"Masala",price:20}
+let products=JSON.parse(localStorage.getItem("products"))||[
+{name:"Atta",price:30,stock:20},
+{name:"Rice",price:55,stock:15},
+{name:"Dal",price:120,stock:10},
+{name:"Sugar",price:45,stock:12},
+{name:"Salt",price:25,stock:25}
 ];
 
-function renderItems(){
+let cart=[];
+let sales=Number(localStorage.getItem("sales"))||0;
+let orders=JSON.parse(localStorage.getItem("orders"))||[];
+
+document.getElementById("sales").innerText=sales;
+
+function render(){
+let s=document.getElementById("search").value.toLowerCase();
 let html="";
-items.forEach((item,i)=>{
-html+=`<div class="card">
-<h4>${item.name}</h4>
-₹${item.price}<br>
-Qty:<input type="number" value="1" id="qty${i}" style="width:50px">
+products.forEach((p,i)=>{
+if(p.name.toLowerCase().includes(s)){
+html+=`
+<div class="card">
+<h4>${p.name}</h4>
+₹${p.price}<br>
+Stock: ${p.stock<=5?`<span class="stock-low">${p.stock} (Low)</span>`:p.stock}<br>
+Qty:<input type="number" value="1" id="qty${i}" style="width:50px"><br>
 <button onclick="addToCart(${i})">Add</button>
-</div>`
+${admin?`
+<button onclick="editProduct(${i})">Edit</button>
+<button onclick="deleteProduct(${i})">Delete</button>`:""}
+</div>`;
+}
 });
 document.getElementById("productList").innerHTML=html;
 }
-renderItems();
+render();
 
 function addToCart(i){
 let qty=Number(document.getElementById("qty"+i).value);
-cart.push({...items[i],qty});
+if(qty>products[i].stock){alert("Not enough stock");return}
+cart.push({...products[i],qty});
 updateCart();
 }
 
 function updateCart(){
-let total=0,list="";
-cart.forEach((c,index)=>{
+let total=0,html="";
+cart.forEach((c,i)=>{
 total+=c.price*c.qty;
-list+=`<li>${c.name} x ${c.qty} <button onclick="removeItem(${index})">❌</button></li>`
+html+=`<li>${c.name} x ${c.qty}</li>`;
 });
 document.getElementById("cartTotal").innerText=total;
 document.getElementById("popupTotal").innerText=total;
-document.getElementById("cartItems").innerHTML=list;
+document.getElementById("cartItems").innerHTML=html;
 }
 
-function removeItem(i){
-cart.splice(i,1);
-updateCart();
-}
-
+function clearCart(){cart=[];updateCart()}
 function openCart(){document.getElementById("cartPopup").style.display="flex"}
 function closeCart(){document.getElementById("cartPopup").style.display="none"}
-function clearCart(){cart=[];updateCart()}
 
 function placeOrder(){
 let name=document.getElementById("custName").value;
 let phone=document.getElementById("custPhone").value;
-let total=document.getElementById("popupTotal").innerText;
 if(!name||!phone){alert("Fill details");return}
-
-let orderId="ORD"+Date.now();
+let id="ORD"+Date.now();
+let total=document.getElementById("popupTotal").innerText;
 let date=new Date().toLocaleString();
-let text=`Order ID: ${orderId}\nName: ${name}\nPhone: ${phone}\nTotal: ₹${total}\nDate: ${date}`;
 
-dailySales+=Number(total);
-localStorage.setItem("sales",dailySales);
-document.getElementById("dailySales").innerText=dailySales;
+let text=`Order ID: ${id}%0AName: ${name}%0APhone: ${phone}%0ATotal: ₹${total}%0ADate: ${date}`;
+window.open(`https://wa.me/${whatsapp}?text=${text}`);
 
-orders.push(text);
+sales+=Number(total);
+localStorage.setItem("sales",sales);
+document.getElementById("sales").innerText=sales;
+
+orders.push(`${id} - ₹${total}`);
 localStorage.setItem("orders",JSON.stringify(orders));
-renderHistory();
+renderOrders();
 
-window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(text)}`);
-alert("Order Placed!");
+cart.forEach(c=>{
+let p=products.find(pr=>pr.name===c.name);
+p.stock-=c.qty;
+});
+localStorage.setItem("products",JSON.stringify(products));
 
 cart=[];
 updateCart();
+render();
 closeCart();
 }
 
-function renderHistory(){
+function renderOrders(){
 let html="";
 orders.forEach((o,i)=>{
-html+=`<li>${o}<br><button onclick="deleteOrder(${i})">Delete</button></li><hr>`
+html+=`<li>${o} <button onclick="deleteOrder(${i})">Delete</button></li>`;
 });
 document.getElementById("orderHistory").innerHTML=html;
 }
-renderHistory();
+renderOrders();
 
 function deleteOrder(i){
 orders.splice(i,1);
 localStorage.setItem("orders",JSON.stringify(orders));
-renderHistory();
+renderOrders();
+}
+
+function login(){
+let u=prompt("Username:");
+let p=prompt("Password:");
+if(u==="admin"&&p==="1234"){
+admin=true;
+document.getElementById("adminPanel").classList.remove("hidden");
+render();
+}else alert("Wrong login");
+}
+
+function logout(){
+admin=false;
+document.getElementById("adminPanel").classList.add("hidden");
+render();
+}
+
+function addProduct(){
+let name=prompt("Product Name:");
+let price=prompt("Price:");
+let stock=prompt("Stock:");
+products.push({name,price:Number(price),stock:Number(stock)});
+localStorage.setItem("products",JSON.stringify(products));
+render();
+}
+
+function editProduct(i){
+let name=prompt("Name:",products[i].name);
+let price=prompt("Price:",products[i].price);
+let stock=prompt("Stock:",products[i].stock);
+products[i]={name,price:Number(price),stock:Number(stock)};
+localStorage.setItem("products",JSON.stringify(products));
+render();
+}
+
+function deleteProduct(i){
+products.splice(i,1);
+localStorage.setItem("products",JSON.stringify(products));
+render();
+}
+
+function resetSales(){
+sales=0;
+localStorage.setItem("sales",0);
+document.getElementById("sales").innerText=0;
 }
 
 function toggleDark(){
 document.body.classList.toggle("dark");
-localStorage.setItem("dark",document.body.classList.contains("dark")?"on":"off");
-}
-
-function uploadLogo(e){
-let reader=new FileReader();
-reader.onload=function(){
-localStorage.setItem("logo",reader.result);
-document.getElementById("storeLogo").src=reader.result;
-}
-reader.readAsDataURL(e.target.files[0]);
-}
-if(localStorage.getItem("logo")){
-document.getElementById("storeLogo").src=localStorage.getItem("logo");
 }
 </script>
 
