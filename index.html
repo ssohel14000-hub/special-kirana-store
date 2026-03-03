@@ -1,14 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="UTF-8">
 <title>Special Kirana Store</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
 
+<style>
 body{
 margin:0;
-font-family:Arial;
-background:#f5f5f5;
+font-family:Arial, sans-serif;
+background:#f4f8f4;
 }
 
 /* Header */
@@ -19,15 +20,33 @@ padding:15px;
 display:flex;
 justify-content:space-between;
 align-items:center;
+position:sticky;
+top:0;
+z-index:1000;
 }
 
-/* Hero Section */
+header h3{
+margin:0;
+}
+
+/* Hero */
 .hero{
-height:260px;
-background:linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)),
-url("https://images.unsplash.com/photo-1604719312566-8912e9c8a213?auto=format&fit=crop&w=1200&q=80");
-background-size:cover;
-background-position:center;
+position:relative;
+height:280px;
+overflow:hidden;
+}
+
+.hero img{
+width:100%;
+height:280px;
+object-fit:cover;
+position:absolute;
+z-index:-1;
+}
+
+.hero-overlay{
+background:rgba(0,0,0,0.5);
+height:100%;
 display:flex;
 flex-direction:column;
 justify-content:center;
@@ -37,12 +56,15 @@ text-align:center;
 }
 
 .hero h2{
+font-size:32px;
 margin:0;
-font-size:28px;
+letter-spacing:1px;
 }
 
 .hero p{
 margin-top:8px;
+font-size:15px;
+opacity:0.9;
 }
 
 /* Products */
@@ -56,8 +78,14 @@ padding:20px;
 .card{
 background:white;
 padding:15px;
-border-radius:10px;
-box-shadow:0 4px 12px rgba(0,0,0,0.1);
+border-radius:12px;
+box-shadow:0 8px 20px rgba(0,0,0,0.08);
+transition:0.3s;
+}
+
+.card:hover{
+transform:translateY(-5px);
+box-shadow:0 12px 25px rgba(0,0,0,0.15);
 }
 
 .price{
@@ -66,19 +94,20 @@ font-weight:bold;
 }
 
 button{
-padding:6px 10px;
+background:#2e7d32;
+color:white;
 border:none;
-border-radius:5px;
+padding:6px 10px;
+border-radius:6px;
 cursor:pointer;
 margin-top:5px;
 }
 
-.admin-panel{
-text-align:center;
-margin:10px;
-display:none;
+button:hover{
+background:#1b5e20;
 }
 
+/* Cart Box */
 .cart-box{
 position:fixed;
 bottom:15px;
@@ -86,35 +115,9 @@ right:15px;
 background:#2e7d32;
 color:white;
 padding:12px;
-border-radius:12px;
-text-align:center;
-}
-
-input{
-padding:5px;
-width:60px;
-}
-
-.modal{
-display:none;
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,0.5);
-justify-content:center;
-align-items:center;
-}
-
-.modal-content{
-background:white;
-padding:20px;
 border-radius:10px;
-width:250px;
-text-align:center;
+box-shadow:0 8px 20px rgba(0,0,0,0.2);
 }
-
 </style>
 </head>
 
@@ -122,47 +125,31 @@ text-align:center;
 
 <header>
 <h3>🛒 Special Kirana Store</h3>
-<button onclick="openLogin()">Login</button>
+<button onclick="login()">Login</button>
 </header>
 
 <div class="hero">
+<img src="https://images.pexels.com/photos/264636/pexels-photo-264636.jpeg">
+<div class="hero-overlay">
 <h2>Welcome to Special Kirana Store</h2>
 <p>Fresh Grocery at Best Price</p>
 </div>
-
-<div class="admin-panel" id="adminPanel">
-<button onclick="addItem()">Add Item</button>
-<button onclick="logout()">Logout</button>
 </div>
 
 <div class="products" id="productList"></div>
 
 <div class="cart-box" id="cartBox">
-Cart: ₹0
-<br>
+Cart: ₹0 <br>
 <a id="waLink" target="_blank">
-<button style="background:#25D366;color:white;">
-Order on WhatsApp
-</button>
+<button style="background:#25D366;margin-top:5px;">Order on WhatsApp</button>
 </a>
 </div>
 
-<!-- Login Modal -->
-<div class="modal" id="loginModal">
-<div class="modal-content">
-<h3>Admin Login</h3>
-<input type="text" id="username" placeholder="Username"><br><br>
-<input type="password" id="password" placeholder="Password"><br><br>
-<button onclick="login()">Login</button>
-</div>
-</div>
-
 <script>
-
-let isAdmin=false;
 let cartTotal=0;
+let whatsappNumber="919876543210"; // Yaha apna number dalein
 
-let defaultItems=[
+let items=[
 {name:"Atta (1kg)",price:30},
 {name:"Rice (1kg)",price:55},
 {name:"Dal (1kg)",price:120},
@@ -185,29 +172,17 @@ let defaultItems=[
 {name:"Butter",price:50}
 ];
 
-if(!localStorage.getItem("items")){
-localStorage.setItem("items",JSON.stringify(defaultItems));
-}
-
-function displayItems(){
-let items=JSON.parse(localStorage.getItem("items"));
+function renderItems(){
 let html="";
 items.forEach((item,index)=>{
 html+=`
 <div class="card">
 <h4>${item.name}</h4>
 <p class="price">₹${item.price}</p>
-<label>Qty:</label>
-<input type="number" min="1" value="1" id="qty${index}">
+Qty: <input type="number" id="qty${index}" value="1" min="1" style="width:50px;">
 <br>
 <button onclick="addToCart(${item.price},${index})">Add to Cart</button>
-${isAdmin?`
-<br>
-<button onclick="editItem(${index})">Edit</button>
-<button onclick="deleteItem(${index})">Delete</button>
-`:""}
-</div>
-`;
+</div>`;
 });
 document.getElementById("productList").innerHTML=html;
 }
@@ -216,65 +191,22 @@ function addToCart(price,index){
 let qty=document.getElementById("qty"+index).value;
 cartTotal+=price*qty;
 document.getElementById("cartBox").innerHTML=
-`Cart: ₹${cartTotal}
-<br>
-<a href="https://wa.me/91XXXXXXXXXX?text=I want to order items worth ₹${cartTotal}" target="_blank">
-<button style="background:#25D366;color:white;">
-Order on WhatsApp
-</button>
+`Cart: ₹${cartTotal}<br>
+<a href="https://wa.me/${whatsappNumber}?text=I want to order items worth ₹${cartTotal}" target="_blank">
+<button style="background:#25D366;margin-top:5px;">Order on WhatsApp</button>
 </a>`;
 }
 
-function openLogin(){
-document.getElementById("loginModal").style.display="flex";
-}
-
 function login(){
-let user=document.getElementById("username").value;
-let pass=document.getElementById("password").value;
-if(user==="admin" && pass==="1234"){
-isAdmin=true;
-document.getElementById("adminPanel").style.display="block";
-document.getElementById("loginModal").style.display="none";
-displayItems();
+let pass=prompt("Enter Admin Password:");
+if(pass==="1234"){
+alert("Admin Logged In");
+}else{
+alert("Wrong Password");
 }
 }
 
-function logout(){
-isAdmin=false;
-document.getElementById("adminPanel").style.display="none";
-displayItems();
-}
-
-function addItem(){
-let name=prompt("Item Name");
-let price=prompt("Price");
-if(name && price){
-let items=JSON.parse(localStorage.getItem("items"));
-items.push({name:name,price:price});
-localStorage.setItem("items",JSON.stringify(items));
-displayItems();
-}
-}
-
-function editItem(index){
-let items=JSON.parse(localStorage.getItem("items"));
-let newName=prompt("Edit Name",items[index].name);
-let newPrice=prompt("Edit Price",items[index].price);
-items[index]={name:newName,price:newPrice};
-localStorage.setItem("items",JSON.stringify(items));
-displayItems();
-}
-
-function deleteItem(index){
-let items=JSON.parse(localStorage.getItem("items"));
-items.splice(index,1);
-localStorage.setItem("items",JSON.stringify(items));
-displayItems();
-}
-
-displayItems();
-
+renderItems();
 </script>
 
 </body>
