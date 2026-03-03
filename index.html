@@ -273,51 +273,89 @@ render();
 
   function openCart(){
 if(cart.length==0) return alert("Cart Empty");
+
 let html="";
 let total=0;
+
 cart.forEach((i,index)=>{
-html+=`
-<div>
-${products[i].name} - ₹${products[i].sp}
-<button onclick="removeItem(${index})">❌</button>
-</div>`;
 total+=products[i].sp;
+
+html+=`
+<div style="display:flex;justify-content:space-between;align-items:center;margin:5px 0;">
+<span>${products[i].name} - ₹${products[i].sp}</span>
+<button onclick="removeItem(${index})">❌</button>
+</div>
+`;
 });
+
+html+=`<hr><b>Total: ₹${total}</b>`;
+
 document.getElementById("cartItems").innerHTML=html;
 document.getElementById("cartPopup").style.display="flex";
 }
 
-function closeCart(){
-document.getElementById("cartPopup").style.display="none";
-}
-
 function removeItem(index){
 let prodIndex=cart[index];
-products[prodIndex].stock++;
+
+products[prodIndex].stock++;  // stock wapas badhao
+
 cart.splice(index,1);
+
+if(cart.length==0){
+closeCart();
+render();
+return;
+}
+
 render();
 openCart();
 }
 
 function clearCart(){
+cart.forEach(i=>{
+products[i].stock++;
+});
 cart=[];
-render();
 closeCart();
+render();
 }
 
 function placeOrder(){
 let name=document.getElementById("custName").value;
 let phone=document.getElementById("custPhone").value;
 
-let id="ORD"+Date.now();
-let msg=`Order ID:${id}%0AName:${name}%0APhone:${phone}%0A`;
+if(name==""||phone==""){
+alert("Enter customer details");
+return;
+}
 
+let id="ORD"+Date.now();
 let total=0;
+let msg=`Order ID: ${id}%0AName: ${name}%0APhone: ${phone}%0A`;
+
 cart.forEach(i=>{
 msg+=`${products[i].name} - ₹${products[i].sp}%0A`;
 total+=products[i].sp;
 profit+=(products[i].sp-products[i].cp);
 });
+
+msg+=`Total: ₹${total}`;
+
+sales+=total;
+orders++;
+
+localStorage.setItem("sales",sales);
+localStorage.setItem("profit",profit);
+localStorage.setItem("orders",orders);
+localStorage.setItem("products",JSON.stringify(products));
+
+let wa=localStorage.getItem("wa");
+window.open(`https://wa.me/${wa}?text=${msg}`);
+
+cart=[];
+closeCart();
+render();
+         }
 
 msg+=`Total: ₹${total}`;
 
