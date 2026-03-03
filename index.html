@@ -1,35 +1,76 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Special Kirana Store</title>
 
 <style>
-body{margin:0;font-family:Arial;background:#f2f7f2;transition:.3s}
-.dark{background:#121212;color:#fff}
-header{background:#2e7d32;color:#fff;padding:12px;display:flex;justify-content:space-between;align-items:center}
-button{background:#2e7d32;color:#fff;border:none;padding:6px 10px;border-radius:6px;margin:3px;cursor:pointer}
-.hero{height:160px;background:url('https://images.pexels.com/photos/264636/pexels-photo-264636.jpeg') center/cover;display:flex;align-items:center;justify-content:center;color:white}
-.hero h2{background:rgba(0,0,0,.5);padding:10px 20px;border-radius:10px}
-.dashboard{background:white;margin:10px;padding:10px;border-radius:10px}
-.dark .dashboard{background:#1e1e1e}
-.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;padding:10px}
-.card{background:white;padding:12px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,.1)}
-.dark .card{background:#1e1e1e}
-input{padding:6px;margin:5px;border-radius:6px;border:1px solid #ccc}
-.stock-low{color:red;font-size:12px}
-.cart-box{position:fixed;bottom:15px;right:15px;background:#2e7d32;color:white;padding:12px;border-radius:12px;cursor:pointer}
-.popup{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);justify-content:center;align-items:center}
-.popup-content{background:white;width:95%;max-width:400px;padding:15px;border-radius:12px;max-height:90vh;overflow:auto}
-.dark .popup-content{background:#1e1e1e;color:white}
-.hidden{display:none}
+body{
+margin:0;
+font-family:Arial;
+background:#f4f6f5;
+transition:0.3s;
+}
+.dark{
+background:#1e1e1e;
+color:white;
+}
+header{
+background:#2e7d32;
+color:white;
+padding:12px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+button{
+background:#2e7d32;
+color:white;
+border:none;
+padding:6px 10px;
+margin:3px;
+border-radius:5px;
+font-size:12px;
+}
+.card{
+background:white;
+padding:10px;
+border-radius:10px;
+box-shadow:0 2px 8px rgba(0,0,0,0.1);
+margin:5px;
+}
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+gap:10px;
+padding:10px;
+}
+.hero{
+height:160px;
+background:linear-gradient(rgba(0,0,0,.5),rgba(0,0,0,.5)),
+url('https://images.unsplash.com/photo-1604719312566-8912e0e3f75c');
+background-size:cover;
+background-position:center;
+display:flex;
+align-items:center;
+justify-content:center;
+color:white;
+font-size:18px;
+}
+.bottomCart{
+position:fixed;
+bottom:15px;
+right:15px;
+}
+.hidden{
+display:none;
+}
 </style>
 </head>
 <body>
 
 <header>
-<b>🛒 Special Kirana Store</b>
+<span>🛒 Special Kirana</span>
 <div>
 <button onclick="toggleDark()">🌙</button>
 <button onclick="login()">Admin</button>
@@ -37,232 +78,201 @@ input{padding:6px;margin:5px;border-radius:6px;border:1px solid #ccc}
 </header>
 
 <div class="hero">
-<h2>Mobile Business Master Version</h2>
+Mobile Business Master Version
 </div>
 
-<div class="dashboard">
+<div style="padding:8px;">
 📊 Sales ₹<span id="sales">0</span> |
 💰 Profit ₹<span id="profit">0</span> |
-🧾 Orders <span id="orders">0</span>
+📦 Orders <span id="orders">0</span>
 </div>
 
-<div id="adminPanel" class="dashboard hidden">
-<h3>Admin Panel</h3>
+<div id="adminPanel" class="hidden" style="padding:8px;">
 <button onclick="addProduct()">Add Product</button>
-<button onclick="changeCredentials()">Change Username/Password</button>
-<button onclick="changeWhatsApp()">Change WhatsApp Number</button>
-<button onclick="exportData()">Backup</button>
-<button onclick="importData()">Restore</button>
+<button onclick="changeCred()">Change Username/Password</button>
+<button onclick="changeWA()">Change WhatsApp</button>
+<button onclick="backup()">Backup</button>
+<button onclick="restore()">Restore</button>
 <button onclick="logout()">Logout</button>
 </div>
 
-<div class="products" id="productList"></div>
+<div id="products" class="grid"></div>
 
-<div class="cart-box" onclick="openCart()">
-Cart ₹<span id="cartTotal">0</span>
-</div>
+<div id="history" style="padding:10px;"></div>
 
-<div class="popup" id="cartPopup">
-<div class="popup-content">
-<h3>Invoice</h3>
-<div id="billArea"></div>
-<b>Total ₹<span id="popupTotal">0</span></b><br>
-<input id="custName" placeholder="Customer Name">
-<input id="custPhone" placeholder="Phone">
-<button onclick="placeOrder()">Order WhatsApp</button>
-<button onclick="window.print()">Print</button>
-<button onclick="clearCart()">Clear</button>
-<button onclick="closeCart()">Close</button>
-</div>
+<div class="bottomCart">
+<button onclick="viewCart()">Cart ₹<span id="cartTotal">0</span></button>
+<button onclick="orderWA()">WhatsApp</button>
 </div>
 
 <script>
-// ---------- INITIAL SETUP ----------
-if(!localStorage.getItem("adminCred")){
-let u=prompt("Set Admin Username:");
-let p=prompt("Set Admin Password:");
-localStorage.setItem("adminCred",JSON.stringify({user:u,pass:p}));
-}
-
-if(!localStorage.getItem("whatsapp")){
-localStorage.setItem("whatsapp","91XXXXXXXXXX");
-}
-
-let admin=false;
 let products=JSON.parse(localStorage.getItem("products"))||[
-{name:"Atta",sp:30,cp:22,stock:20,sold:0},
-{name:"Rice",sp:55,cp:45,stock:15,sold:0}
+{name:"Atta",sp:30,cp:20,stock:25,unit:"kg",sold:0},
+{name:"Rice",sp:55,cp:40,stock:20,unit:"kg",sold:0},
+{name:"Oil",sp:140,cp:110,stock:15,unit:"L",sold:0}
 ];
-
 let cart=[];
-let sales=Number(localStorage.getItem("sales"))||0;
+let admin=false;
 let profit=Number(localStorage.getItem("profit"))||0;
+let sales=Number(localStorage.getItem("sales"))||0;
 let orders=Number(localStorage.getItem("orders"))||0;
 
-updateDashboard();
-
-// ---------- RENDER ----------
-function render(){
-let html="";
-products.forEach((p,i)=>{
-html+=`
-<div class="card">
-<h4>${p.name}</h4>
-SP ₹${p.sp}<br>
-Stock ${p.stock<=5?'<span class="stock-low">'+p.stock+' Low</span>':p.stock}<br>
-Qty:<input type="number" value="1" id="qty${i}" style="width:50px"><br>
-<button onclick="addToCart(${i})">Add</button>
-${admin?`<button onclick="editProduct(${i})">Edit</button>
-<button onclick="deleteProduct(${i})">Delete</button>`:""}
-</div>`;
-});
-document.getElementById("productList").innerHTML=html;
+if(!localStorage.getItem("cred")){
+localStorage.setItem("cred",JSON.stringify({u:"admin",p:"1234"}));
 }
-render();
+if(!localStorage.getItem("wa")){
+localStorage.setItem("wa","919876543210");
+}
 
-// ---------- DASHBOARD ----------
-function updateDashboard(){
-document.getElementById("sales").innerText=sales;
+function clean(v){
+if(!v) return 0;
+return Number(v.toString().replace(/[^0-9]/g,''))||0;
+}
+
+function render(){
+document.getElementById("products").innerHTML="";
+products.forEach((p,i)=>{
+let div=document.createElement("div");
+div.className="card";
+div.innerHTML=`
+<b>${p.name}</b><br>
+₹${p.sp}<br>
+Stock: ${p.stock} ${p.unit}<br>
+Qty:<input id="q${i}" type="number" value="1" style="width:50px"><br>
+<button onclick="addCart(${i})">Add</button>
+${admin?`
+<button onclick="edit(${i})">Edit</button>
+<button onclick="del(${i})">Delete</button>`:""}
+`;
+document.getElementById("products").appendChild(div);
+});
+updateStats();
+}
+
+function updateStats(){
 document.getElementById("profit").innerText=profit;
+document.getElementById("sales").innerText=sales;
 document.getElementById("orders").innerText=orders;
 }
 
-// ---------- CART ----------
-function addToCart(i){
-let q=Number(document.getElementById("qty"+i).value);
-if(q>products[i].stock){alert("Not enough stock");return}
-cart.push({...products[i],qty:q,index:i});
+function addCart(i){
+let q=clean(document.getElementById("q"+i).value);
+if(q<=0||q>products[i].stock) return alert("Invalid Qty");
+cart.push({i,q});
+products[i].stock-=q;
+products[i].sold+=q;
+render();
 updateCart();
 }
+
 function updateCart(){
-let total=0,html="";
-cart.forEach(c=>{
-total+=c.sp*c.qty;
-html+=`${c.name} x ${c.qty}<br>`;
-});
+let total=0;
+cart.forEach(c=> total+=products[c.i].sp*c.q);
 document.getElementById("cartTotal").innerText=total;
-document.getElementById("popupTotal").innerText=total;
-document.getElementById("billArea").innerHTML=html;
 }
-function clearCart(){cart=[];updateCart()}
-function openCart(){updateCart();document.getElementById("cartPopup").style.display="flex"}
-function closeCart(){document.getElementById("cartPopup").style.display="none"}
 
-// ---------- ORDER ----------
-function placeOrder(){
-let total=Number(document.getElementById("popupTotal").innerText);
+function viewCart(){
+alert("Items: "+cart.length);
+}
+
+function orderWA(){
+if(cart.length==0) return alert("Cart empty");
 let id="ORD"+Date.now();
-let date=new Date().toLocaleString();
-let name=document.getElementById("custName").value;
-let phone=document.getElementById("custPhone").value;
-let whatsapp=localStorage.getItem("whatsapp");
-
-sales+=total;
-orders+=1;
+let text=`Order ID: ${id}%0A`;
+cart.forEach(c=>{
+let p=products[c.i];
+text+=`${p.name} ${c.q}${p.unit}%0A`;
+sales+=p.sp*c.q;
+profit+=(p.sp-p.cp)*c.q;
+});
+orders++;
+localStorage.setItem("profit",profit);
 localStorage.setItem("sales",sales);
 localStorage.setItem("orders",orders);
-
-cart.forEach(c=>{
-products[c.index].stock-=c.qty;
-profit+=(products[c.index].sp-products[c.index].cp)*c.qty;
-});
-localStorage.setItem("profit",profit);
 localStorage.setItem("products",JSON.stringify(products));
-
-updateDashboard();
-render();
-
-let text=`Order ID:${id}%0AName:${name}%0APhone:${phone}%0ATotal:₹${total}%0ADate:${date}`;
-window.open(`https://wa.me/${whatsapp}?text=${text}`);
-
+let wa=localStorage.getItem("wa");
+window.open(`https://wa.me/${wa}?text=${text}`);
 cart=[];
 updateCart();
-closeCart();
+render();
 }
 
-// ---------- ADMIN ----------
 function login(){
-let saved=JSON.parse(localStorage.getItem("adminCred"));
-let u=prompt("Username:");
-let p=prompt("Password:");
-if(u===saved.user && p===saved.pass){
+let u=prompt("Username");
+let p=prompt("Password");
+let cred=JSON.parse(localStorage.getItem("cred"));
+if(u==cred.u && p==cred.p){
 admin=true;
 document.getElementById("adminPanel").classList.remove("hidden");
 render();
-}else alert("Wrong Login");
 }
+}
+
 function logout(){
 admin=false;
 document.getElementById("adminPanel").classList.add("hidden");
 render();
 }
 
-function changeCredentials(){
-let saved=JSON.parse(localStorage.getItem("adminCred"));
-let old=prompt("Current Password:");
-if(old===saved.pass){
-let newUser=prompt("New Username:",saved.user);
-let newPass=prompt("New Password:");
-localStorage.setItem("adminCred",JSON.stringify({user:newUser,pass:newPass}));
-alert("Updated Successfully");
-}else alert("Wrong Password");
-}
-
-function changeWhatsApp(){
-let num=prompt("Enter WhatsApp Number with 91:");
-localStorage.setItem("whatsapp",num);
-alert("WhatsApp Updated");
-}
-
-// ---------- PRODUCT ----------
 function addProduct(){
 let n=prompt("Name");
-let sp=prompt("Selling Price");
-let cp=prompt("Cost Price");
-let st=prompt("Stock");
-products.push({name:n,sp:Number(sp),cp:Number(cp),stock:Number(st)});
+let sp=clean(prompt("Selling Price"));
+let cp=clean(prompt("Cost Price"));
+let st=clean(prompt("Stock"));
+let unit=prompt("Unit (kg/L/g/pcs)");
+products.push({name:n,sp,cp,stock:st,unit,sold:0});
 localStorage.setItem("products",JSON.stringify(products));
 render();
 }
-function editProduct(i){
-let n=prompt("Name",products[i].name);
-let sp=prompt("SP",products[i].sp);
-let cp=prompt("CP",products[i].cp);
-let st=prompt("Stock",products[i].stock);
-products[i]={name:n,sp:Number(sp),cp:Number(cp),stock:Number(st)};
+
+function edit(i){
+let p=products[i];
+p.name=prompt("Name",p.name);
+p.sp=clean(prompt("SP",p.sp));
+p.cp=clean(prompt("CP",p.cp));
+p.stock=clean(prompt("Stock",p.stock));
+p.unit=prompt("Unit",p.unit);
 localStorage.setItem("products",JSON.stringify(products));
 render();
 }
-function deleteProduct(i){
+
+function del(i){
 products.splice(i,1);
 localStorage.setItem("products",JSON.stringify(products));
 render();
 }
 
-// ---------- BACKUP ----------
-function exportData(){
-alert(JSON.stringify({products,sales,profit,orders,adminCred:localStorage.getItem("adminCred"),whatsapp:localStorage.getItem("whatsapp")}));
-}
-function importData(){
-let data=prompt("Paste Backup Data");
-let obj=JSON.parse(data);
-products=obj.products;
-sales=obj.sales;
-profit=obj.profit;
-orders=obj.orders;
-localStorage.setItem("products",JSON.stringify(products));
-localStorage.setItem("sales",sales);
-localStorage.setItem("profit",profit);
-localStorage.setItem("orders",orders);
-updateDashboard();
-render();
+function changeCred(){
+let u=prompt("New Username");
+let p=prompt("New Password");
+localStorage.setItem("cred",JSON.stringify({u,p}));
+alert("Changed");
 }
 
-// ---------- DARK ----------
+function changeWA(){
+let n=prompt("New WhatsApp Number with country code");
+localStorage.setItem("wa",n);
+alert("WhatsApp Updated");
+}
+
 function toggleDark(){
 document.body.classList.toggle("dark");
 }
-</script>
 
+function backup(){
+alert(JSON.stringify(products));
+}
+
+function restore(){
+let d=prompt("Paste Backup Data");
+if(d){
+products=JSON.parse(d);
+localStorage.setItem("products",d);
+render();
+}
+}
+
+render();
+</script>
 </body>
-  </html>
+</html>
