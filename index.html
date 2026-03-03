@@ -5,7 +5,6 @@
 <title>Special Kirana Store</title>
 
 <style>
-
 body{
 margin:0;
 font-family:Arial;
@@ -13,19 +12,13 @@ background:#f4f6f5;
 transition:.3s;
 }
 
-.dark{
-background:#121212;
-color:white;
-}
-
 header{
 background:#2e7d32;
 color:white;
-padding:12px;
+padding:10px;
 display:flex;
 justify-content:space-between;
 align-items:center;
-font-weight:bold;
 }
 
 button{
@@ -46,12 +39,10 @@ url("https://images.unsplash.com/photo-1604719312566-8912e9c8a213?auto=format&fi
 background-size:cover;
 background-position:center;
 display:flex;
-justify-content:center;
 align-items:center;
-color:white;
+justify-content:center;
 text-align:center;
-font-size:22px;
-font-weight:bold;
+color:white;
 }
 
 .grid{
@@ -65,43 +56,36 @@ padding:10px;
 background:white;
 padding:10px;
 border-radius:10px;
-box-shadow:0 3px 10px rgba(0,0,0,.1);
+box-shadow:0 3px 8px rgba(0,0,0,.1);
 }
 
-.dark .card{
-background:#222;
+.controls button{
+padding:4px 8px;
 }
 
 .fixed{
 position:fixed;
-bottom:10px;
-right:10px;
+bottom:15px;
+right:15px;
 }
 
-.hidden{
-display:none;
+.hidden{display:none;}
+
+.dark{
+background:#121212;
+color:white;
 }
 
-.low{
-color:red;
-font-weight:bold;
-}
-
-input{
-padding:5px;
-border-radius:5px;
-border:1px solid #ccc;
-margin:3px;
-width:120px;
+.dark .card{
+background:#1e1e1e;
 }
 
 </style>
 </head>
-
 <body>
 
 <header>
-🛒 Special Kirana Store
+<b>🛒 Special Kirana Store</b>
 <div>
 <button onclick="toggleDark()">🌙</button>
 <button onclick="login()">Admin</button>
@@ -109,29 +93,19 @@ width:120px;
 </header>
 
 <div class="hero">
-Welcome in Special Kirana Store
+<h2>Welcome in Special Kirana Store</h2>
 </div>
 
-<div style="padding:8px">
+<div style="padding:8px;">
 📊 Sales ₹<span id="sales">0</span> |
 💰 Profit ₹<span id="profit">0</span> |
-🧾 Orders <span id="orders">0</span> |
-💵 GST ₹<span id="gstTotal">0</span>
+🧾 Orders <span id="orders">0</span>
 </div>
 
-<div id="adminPanel" class="hidden" style="padding:8px">
+<div id="adminPanel" class="hidden" style="padding:8px;">
 <button onclick="addProduct()">Add Product</button>
 <button onclick="changeLogin()">Change Login</button>
-<button onclick="changeWA()">Change WhatsApp</button>
-<button onclick="setGST()">Set GST %</button>
-<button onclick="backup()">Backup</button>
-<button onclick="restore()">Restore</button>
 <button onclick="logout()">Logout</button>
-</div>
-
-<div style="padding:10px">
-<input id="codeInput" placeholder="Enter Product Code">
-<button onclick="addByCode()">Add By Code</button>
 </div>
 
 <div id="products" class="grid"></div>
@@ -141,95 +115,78 @@ Welcome in Special Kirana Store
 </div>
 
 <script>
-
 let products = JSON.parse(localStorage.getItem("products")) || [
-{name:"Atta",code:"ATTA01",sp:30,cp:25,stock:20,unit:"kg"},
-{name:"Rice",code:"RICE01",sp:55,cp:48,stock:20,unit:"kg"},
-{name:"Chana",code:"CHANA01",sp:80,cp:70,stock:50,unit:"kg"}
+{name:"Atta",price:30,stock:19,unit:"kg"},
+{name:"Rice",price:55,stock:20,unit:"kg"},
+{name:"Chana",price:80,stock:50,unit:"kg"}
 ];
 
-let sales=Number(localStorage.getItem("sales"))||0;
-let profit=Number(localStorage.getItem("profit"))||0;
-let orders=Number(localStorage.getItem("orders"))||0;
-let gstPercent=Number(localStorage.getItem("gstPercent"))||5;
-let whatsapp=localStorage.getItem("wa")||"91XXXXXXXXXX";
+let cart=[];
+let sales=0;
+let profit=0;
+let orders=0;
 let admin=false;
-let cartTotal=0;
 
-let user=localStorage.getItem("user")||"admin";
-let pass=localStorage.getItem("pass")||"1234";
+let loginData = JSON.parse(localStorage.getItem("loginData")) || {user:"admin",pass:"1234"};
 
 function render(){
-document.getElementById("products").innerHTML="";
+let html="";
 products.forEach((p,i)=>{
-let card=document.createElement("div");
-card.className="card";
-
-card.innerHTML=`
+html+=`
+<div class="card">
 <b>${p.name}</b><br>
-Code: ${p.code}<br>
-₹${p.sp}<br>
-Stock: ${p.stock} ${p.unit || ""}<br>
-<button onclick="addCart(${i})">+</button>
-`;
-
-if(admin){
-card.innerHTML+=`
+₹${p.price}<br>
+Stock: ${p.stock} ${p.unit}<br>
+<div class="controls">
+<button onclick="add(${i})">+</button>
+<button onclick="removeItem(${i})">-</button>
+</div>
+${admin ? `
 <button onclick="editProduct(${i})">Edit</button>
 <button onclick="deleteProduct(${i})">Delete</button>
+` : ""}
+</div>
 `;
-}
-
-if(p.stock<=5){
-card.innerHTML+=`<div class="low">Low Stock</div>`;
-}
-
-document.getElementById("products").appendChild(card);
 });
-
-updateStats();
+document.getElementById("products").innerHTML=html;
 }
 
-function addCart(i){
+function add(i){
 if(products[i].stock>0){
 products[i].stock--;
-cartTotal+=products[i].sp;
-render();
+cart.push(products[i]);
 updateCart();
+render();
 }
+}
+
+function removeItem(i){
+products[i].stock++;
+updateCart();
+render();
 }
 
 function updateCart(){
-document.getElementById("cartTotal").innerText=cartTotal;
-}
-
-function updateStats(){
-document.getElementById("sales").innerText=sales;
-document.getElementById("profit").innerText=profit;
-document.getElementById("orders").innerText=orders;
-document.getElementById("gstTotal").innerText=Math.round((sales*gstPercent)/100);
-localStorage.setItem("products",JSON.stringify(products));
-localStorage.setItem("sales",sales);
-localStorage.setItem("profit",profit);
-localStorage.setItem("orders",orders);
+let total=cart.reduce((sum,p)=>sum+p.price,0);
+document.getElementById("cartTotal").innerText=total;
 }
 
 function checkout(){
-if(cartTotal==0)return;
-sales+=cartTotal;
-profit+=Math.round(cartTotal*0.2);
+if(cart.length==0) return;
+let total=cart.reduce((sum,p)=>sum+p.price,0);
+sales+=total;
 orders++;
-let text="New Order%0ATotal: ₹"+cartTotal;
-window.open("https://wa.me/"+whatsapp+"?text="+text);
-cartTotal=0;
-render();
+document.getElementById("sales").innerText=sales;
+document.getElementById("orders").innerText=orders;
+cart=[];
 updateCart();
+alert("Order Successful");
 }
 
 function login(){
-let u=prompt("Username");
-let p=prompt("Password");
-if(u==user && p==pass){
+let u=prompt("Username:");
+let p=prompt("Password:");
+if(u===loginData.user && p===loginData.pass){
 admin=true;
 document.getElementById("adminPanel").classList.remove("hidden");
 render();
@@ -243,56 +200,40 @@ render();
 }
 
 function addProduct(){
-let name=prompt("Name");
-let code=prompt("Code");
-let sp=prompt("Selling Price");
-let cp=prompt("Cost Price");
-let stock=prompt("Stock");
-let unit=prompt("Unit (kg/pc/litre)");
-
-products.push({name,code,sp:Number(sp),cp:Number(cp),stock:Number(stock),unit});
+let n=prompt("Product Name");
+let pr=prompt("Price");
+let st=prompt("Stock");
+let unit=prompt("Unit (kg/pcs)");
+products.push({name:n,price:Number(pr),stock:Number(st),unit:unit});
+save();
 render();
 }
 
 function editProduct(i){
-let sp=prompt("New Selling Price",products[i].sp);
-let stock=prompt("New Stock",products[i].stock);
-products[i].sp=Number(sp);
-products[i].stock=Number(stock);
+let pr=prompt("New Price",products[i].price);
+let st=prompt("New Stock",products[i].stock);
+products[i].price=Number(pr);
+products[i].stock=Number(st);
+save();
 render();
 }
 
 function deleteProduct(i){
 products.splice(i,1);
+save();
 render();
 }
 
 function changeLogin(){
-user=prompt("New Username");
-pass=prompt("New Password");
-localStorage.setItem("user",user);
-localStorage.setItem("pass",pass);
+let u=prompt("New Username");
+let p=prompt("New Password");
+loginData={user:u,pass:p};
+localStorage.setItem("loginData",JSON.stringify(loginData));
+alert("Login Changed");
 }
 
-function changeWA(){
-whatsapp=prompt("New WhatsApp Number with country code");
-localStorage.setItem("wa",whatsapp);
-}
-
-function setGST(){
-gstPercent=prompt("GST %");
-localStorage.setItem("gstPercent",gstPercent);
-updateStats();
-}
-
-function backup(){
-alert(JSON.stringify(products));
-}
-
-function restore(){
-let data=prompt("Paste Backup Data");
-products=JSON.parse(data);
-render();
+function save(){
+localStorage.setItem("products",JSON.stringify(products));
 }
 
 function toggleDark(){
@@ -300,7 +241,6 @@ document.body.classList.toggle("dark");
 }
 
 render();
-
 </script>
 </body>
 </html>
