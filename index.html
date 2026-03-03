@@ -9,7 +9,7 @@
 body{
 margin:0;
 font-family:Arial, sans-serif;
-background:#f4f8f4;
+background:#f2f7f2;
 }
 
 /* Header */
@@ -29,16 +29,29 @@ header h3{
 margin:0;
 }
 
+button{
+background:#2e7d32;
+color:white;
+border:none;
+padding:6px 12px;
+border-radius:6px;
+cursor:pointer;
+}
+
+button:hover{
+background:#1b5e20;
+}
+
 /* Hero */
 .hero{
 position:relative;
-height:280px;
+height:250px;
 overflow:hidden;
 }
 
 .hero img{
 width:100%;
-height:280px;
+height:250px;
 object-fit:cover;
 position:absolute;
 z-index:-1;
@@ -53,18 +66,6 @@ justify-content:center;
 align-items:center;
 color:white;
 text-align:center;
-}
-
-.hero h2{
-font-size:32px;
-margin:0;
-letter-spacing:1px;
-}
-
-.hero p{
-margin-top:8px;
-font-size:15px;
-opacity:0.9;
 }
 
 /* Products */
@@ -84,7 +85,7 @@ transition:0.3s;
 }
 
 .card:hover{
-transform:translateY(-5px);
+transform:translateY(-4px);
 box-shadow:0 12px 25px rgba(0,0,0,0.15);
 }
 
@@ -93,21 +94,19 @@ color:#2e7d32;
 font-weight:bold;
 }
 
-button{
-background:#2e7d32;
-color:white;
-border:none;
-padding:6px 10px;
-border-radius:6px;
-cursor:pointer;
-margin-top:5px;
+/* Admin Panel */
+.admin-panel{
+text-align:center;
+margin-top:10px;
+display:none;
 }
 
-button:hover{
-background:#1b5e20;
+.admin-panel input{
+padding:5px;
+margin:5px;
 }
 
-/* Cart Box */
+/* Cart */
 .cart-box{
 position:fixed;
 bottom:15px;
@@ -125,15 +124,22 @@ box-shadow:0 8px 20px rgba(0,0,0,0.2);
 
 <header>
 <h3>🛒 Special Kirana Store</h3>
-<button onclick="login()">Login</button>
+<button onclick="adminLogin()">Admin</button>
 </header>
 
 <div class="hero">
 <img src="https://images.pexels.com/photos/264636/pexels-photo-264636.jpeg">
 <div class="hero-overlay">
-<h2>Welcome to Special Kirana Store</h2>
-<p>Fresh Grocery at Best Price</p>
+<h2>Fresh Kirana Items</h2>
+<p>Best Quality Grocery at Best Price</p>
 </div>
+</div>
+
+<div class="admin-panel" id="adminPanel">
+<input type="text" id="newName" placeholder="Item Name">
+<input type="number" id="newPrice" placeholder="Price">
+<button onclick="addItem()">Add Item</button>
+<button onclick="logout()">Logout</button>
 </div>
 
 <div class="products" id="productList"></div>
@@ -146,10 +152,11 @@ Cart: ₹0 <br>
 </div>
 
 <script>
-let cartTotal=0;
-let whatsappNumber="919876543210"; // Yaha apna number dalein
 
-let items=[
+let whatsappNumber="919876543210"; // apna number dalein
+let cartTotal=0;
+
+let defaultItems=[
 {name:"Atta (1kg)",price:30},
 {name:"Rice (1kg)",price:55},
 {name:"Dal (1kg)",price:120},
@@ -172,6 +179,12 @@ let items=[
 {name:"Butter",price:50}
 ];
 
+let items=JSON.parse(localStorage.getItem("items")) || defaultItems;
+
+function saveItems(){
+localStorage.setItem("items",JSON.stringify(items));
+}
+
 function renderItems(){
 let html="";
 items.forEach((item,index)=>{
@@ -182,6 +195,8 @@ html+=`
 Qty: <input type="number" id="qty${index}" value="1" min="1" style="width:50px;">
 <br>
 <button onclick="addToCart(${item.price},${index})">Add to Cart</button>
+${isAdmin ? `<br><button onclick="editItem(${index})">Edit</button>
+<button onclick="deleteItem(${index})">Delete</button>` : ""}
 </div>`;
 });
 document.getElementById("productList").innerHTML=html;
@@ -190,6 +205,10 @@ document.getElementById("productList").innerHTML=html;
 function addToCart(price,index){
 let qty=document.getElementById("qty"+index).value;
 cartTotal+=price*qty;
+updateCart();
+}
+
+function updateCart(){
 document.getElementById("cartBox").innerHTML=
 `Cart: ₹${cartTotal}<br>
 <a href="https://wa.me/${whatsappNumber}?text=I want to order items worth ₹${cartTotal}" target="_blank">
@@ -197,16 +216,57 @@ document.getElementById("cartBox").innerHTML=
 </a>`;
 }
 
-function login(){
+let isAdmin=false;
+
+function adminLogin(){
 let pass=prompt("Enter Admin Password:");
 if(pass==="1234"){
+isAdmin=true;
+document.getElementById("adminPanel").style.display="block";
+renderItems();
 alert("Admin Logged In");
 }else{
 alert("Wrong Password");
 }
 }
 
+function logout(){
+isAdmin=false;
+document.getElementById("adminPanel").style.display="none";
 renderItems();
+}
+
+function addItem(){
+let name=document.getElementById("newName").value;
+let price=document.getElementById("newPrice").value;
+if(name && price){
+items.push({name:name,price:Number(price)});
+saveItems();
+renderItems();
+document.getElementById("newName").value="";
+document.getElementById("newPrice").value="";
+}
+}
+
+function deleteItem(index){
+items.splice(index,1);
+saveItems();
+renderItems();
+}
+
+function editItem(index){
+let newName=prompt("Edit Name:",items[index].name);
+let newPrice=prompt("Edit Price:",items[index].price);
+if(newName && newPrice){
+items[index]={name:newName,price:Number(newPrice)};
+saveItems();
+renderItems();
+}
+}
+
+renderItems();
+updateCart();
+
 </script>
 
 </body>
