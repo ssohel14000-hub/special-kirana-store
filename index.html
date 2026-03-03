@@ -1,145 +1,33 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Special Kirana Store</title>
 
 <style>
-body{
-margin:0;
-font-family:Arial, sans-serif;
-background:#f3f6f4;
-}
-
-header{
-background:#1b5e20;
-color:white;
-padding:15px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-}
-
-header h1{
-margin:0;
-font-size:20px;
-}
-
-button{
-background:#2e7d32;
-color:white;
-border:none;
-padding:6px 10px;
-border-radius:6px;
-margin:2px;
-cursor:pointer;
-font-size:12px;
-}
-
-.hero{
-height:180px;
-background:linear-gradient(rgba(0,0,0,.6),rgba(0,0,0,.6)),
-url('https://images.unsplash.com/photo-1604719312566-8912e0e3f75c?q=80&w=1400');
-background-size:cover;
-background-position:center;
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
-color:white;
-text-align:center;
-}
-
-.hero h2{
-margin:0;
-font-size:24px;
-}
-
-.container{
-padding:10px;
-}
-
-.searchBox{
-margin:10px 0;
-text-align:center;
-}
-
-.searchBox input{
-padding:8px;
-width:90%;
-max-width:300px;
-border-radius:8px;
-border:1px solid #ccc;
-}
-
-.grid{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
-gap:10px;
-}
-
-.card{
-background:white;
-padding:10px;
-border-radius:10px;
-box-shadow:0 4px 10px rgba(0,0,0,0.1);
-}
-
-.card h4{
-margin:5px 0;
-}
-
-.low{
-color:red;
-font-size:12px;
-}
-
-.cartBtn{
-position:fixed;
-bottom:15px;
-right:15px;
-background:#1b5e20;
-padding:12px;
-border-radius:50px;
-color:white;
-font-weight:bold;
-}
-
-.adminPanel{
-background:#e8f5e9;
-padding:8px;
-display:none;
-}
-
-.dark{
-background:#111;
-color:white;
-}
-
-.dark .card{
-background:#2b2b2b;
-color:white;
-}
-
-.dark header{
-background:#000;
-}
-
-.logo{
-height:35px;
-border-radius:6px;
-}
-
+body{margin:0;font-family:Arial;background:#f2f2f2}
+header{background:#1b5e20;color:white;padding:12px;display:flex;justify-content:space-between;align-items:center}
+button{background:#2e7d32;color:white;border:none;padding:6px 10px;margin:3px;border-radius:6px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;padding:10px}
+.card{background:white;padding:10px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.hero{height:160px;background:linear-gradient(rgba(0,0,0,.6),rgba(0,0,0,.6)),
+url('https://images.unsplash.com/photo-1604719312566-8912e0e3f75c');
+background-size:cover;background-position:center;
+display:flex;flex-direction:column;align-items:center;justify-content:center;color:white}
+.cartBtn{position:fixed;bottom:20px;right:20px;border-radius:40px;padding:12px 20px}
+.popup{position:fixed;top:0;left:0;width:100%;height:100%;
+background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center}
+.popupContent{background:white;padding:15px;border-radius:12px;width:90%;max-width:400px}
+input{width:100%;padding:6px;margin:5px 0;border-radius:6px;border:1px solid #ccc}
+.hidden{display:none}
+.dark{background:#1e1e1e;color:white}
 </style>
 </head>
+
 <body>
 
 <header>
-<div>
-<img id="logoImg" class="logo">
-</div>
-<h1>🛒 Special Kirana Store</h1>
+<div>🛒 Special Kirana Store</div>
 <div>
 <button onclick="toggleDark()">🌙</button>
 <button onclick="login()">Admin</button>
@@ -149,172 +37,130 @@ border-radius:6px;
 <div class="hero">
 <h2>Welcome in Special Kirana Store</h2>
 <p>Premium Grocery Mall Experience</p>
-<input type="file" onchange="uploadLogo(event)">
 </div>
 
-<div class="container">
-
-<div style="text-align:center;margin:8px;">
+<div style="padding:10px">
 📊 Sales ₹<span id="sales">0</span> |
 💰 Profit ₹<span id="profit">0</span> |
-🧾 Orders <span id="orders">0</span>
+📦 Orders <span id="orders">0</span>
 </div>
 
-<div class="adminPanel" id="adminPanel">
-<button onclick="addProduct()">Add</button>
-<button onclick="changeLogin()">Change Login</button>
+<div style="padding:10px">
+<input placeholder="Search product..." onkeyup="search(this.value)">
+</div>
+
+<div id="adminPanel" class="hidden" style="padding:10px">
+<button onclick="addProduct()">Add Product</button>
+<button onclick="changeCred()">Change Login</button>
 <button onclick="changeWA()">Change WhatsApp</button>
-<button onclick="backup()">Backup</button>
-<button onclick="restore()">Restore</button>
 <button onclick="logout()">Logout</button>
-</div>
-
-<div class="searchBox">
-<input type="text" id="search" placeholder="Search product..." onkeyup="render()">
 </div>
 
 <div id="products" class="grid"></div>
 
-</div>
+<button class="cartBtn" onclick="openCart()">Cart ₹<span id="cartTotal">0</span></button>
 
-<div class="cartBtn" onclick="openCart()">
-Cart ₹<span id="cartTotal">0</span>
+<div class="popup" id="cartPopup">
+<div class="popupContent">
+<h3>Your Cart</h3>
+<div id="cartItems"></div>
+<hr>
+<input id="custName" placeholder="Customer Name">
+<input id="custPhone" placeholder="Customer Phone">
+<button onclick="placeOrder()">Place Order</button>
+<button onclick="clearCart()">Clear</button>
+<button onclick="closeCart()">Close</button>
+</div>
 </div>
 
 <script>
-
 let products=JSON.parse(localStorage.getItem("products"))||[
-{name:"Atta",sp:30,cp:20,stock:20,unit:"kg"},
-{name:"Rice",sp:55,cp:40,stock:15,unit:"kg"}
+{name:"Chana",sp:80,cp:60,stock:20,unit:"kg",sold:0},
+{name:"Rice",sp:50,cp:35,stock:15,unit:"kg",sold:0}
 ];
 
 let cart=[];
+let admin=false;
 let sales=Number(localStorage.getItem("sales"))||0;
 let profit=Number(localStorage.getItem("profit"))||0;
 let orders=Number(localStorage.getItem("orders"))||0;
 
-if(!localStorage.getItem("login")){
-localStorage.setItem("login",JSON.stringify({u:"admin",p:"1234"}));
+if(!localStorage.getItem("cred")){
+localStorage.setItem("cred",JSON.stringify({u:"admin",p:"1234"}));
 }
 if(!localStorage.getItem("wa")){
 localStorage.setItem("wa","919876543210");
 }
 
 function render(){
-let html="";
-let search=document.getElementById("search").value.toLowerCase();
-
+let box=document.getElementById("products");
+box.innerHTML="";
 products.forEach((p,i)=>{
-if(p.name.toLowerCase().includes(search)){
-html+=`
+box.innerHTML+=`
 <div class="card">
-<h4>${p.name}</h4>
+<b>${p.name}</b><br>
 ₹${p.sp}<br>
-Stock: ${p.stock} ${p.unit}
-${p.stock<5?'<div class="low">Low Stock</div>':""}
-<br>
+Stock: ${p.stock} ${p.unit}<br>
 <button onclick="addCart(${i})">Add</button>
 ${admin?`
 <button onclick="edit(${i})">Edit</button>
 <button onclick="del(${i})">Delete</button>`:""}
-</div>`;
-}
+</div>
+`;
 });
-
-document.getElementById("products").innerHTML=html;
-updateStats();
-updateCart();
+document.getElementById("sales").innerText=sales;
+document.getElementById("profit").innerText=profit;
+document.getElementById("orders").innerText=orders;
+updateCartTotal();
+localStorage.setItem("products",JSON.stringify(products));
 }
-
-let admin=false;
 
 function addCart(i){
-if(products[i].stock<=0) return alert("Out of Stock");
+if(products[i].stock<=0){alert("Out of stock");return}
 cart.push(i);
 products[i].stock--;
 render();
 }
 
-function updateCart(){
-let total=0;
-cart.forEach(i=> total+=products[i].sp);
-document.getElementById("cartTotal").innerText=total;
+function updateCartTotal(){
+let t=0;
+cart.forEach(i=>t+=products[i].sp);
+document.getElementById("cartTotal").innerText=t;
 }
 
-function checkout(){
-if(cart.length==0) return alert("Cart Empty");
-
-let id="ORD"+Date.now();
-let msg=`Order ID:${id}%0A`;
-
-let total=0;
-cart.forEach(i=>{
-msg+=`${products[i].name} - ₹${products[i].sp}%0A`;
-total+=products[i].sp;
-profit+=(products[i].sp-products[i].cp);
-});
-
-msg+=`Total: ₹${total}`;
-
-sales+=total;
-orders++;
-
-localStorage.setItem("sales",sales);
-localStorage.setItem("profit",profit);
-localStorage.setItem("orders",orders);
-localStorage.setItem("products",JSON.stringify(products));
-
-let wa=localStorage.getItem("wa");
-window.open(`https://wa.me/${wa}?text=${msg}`);
-
-cart=[];
-render();
-}
-
-  function openCart(){
-if(cart.length==0) return alert("Cart Empty");
-
+function openCart(){
+if(cart.length==0){alert("Cart Empty");return}
 let html="";
 let total=0;
-
 cart.forEach((i,index)=>{
 total+=products[i].sp;
-
 html+=`
-<div style="display:flex;justify-content:space-between;align-items:center;margin:5px 0;">
+<div style="display:flex;justify-content:space-between">
 <span>${products[i].name} - ₹${products[i].sp}</span>
 <button onclick="removeItem(${index})">❌</button>
 </div>
 `;
 });
-
-html+=`<hr><b>Total: ₹${total}</b>`;
-
+html+=`<hr><b>Total ₹${total}</b>`;
 document.getElementById("cartItems").innerHTML=html;
 document.getElementById("cartPopup").style.display="flex";
 }
 
-function removeItem(index){
-let prodIndex=cart[index];
-
-products[prodIndex].stock++;  // stock wapas badhao
-
-cart.splice(index,1);
-
-if(cart.length==0){
-closeCart();
-render();
-return;
+function closeCart(){
+document.getElementById("cartPopup").style.display="none";
 }
 
+function removeItem(index){
+let p=cart[index];
+products[p].stock++;
+cart.splice(index,1);
+if(cart.length==0){closeCart()}
 render();
 openCart();
 }
 
 function clearCart(){
-cart.forEach(i=>{
-products[i].stock++;
-});
+cart.forEach(i=>products[i].stock++);
 cart=[];
 closeCart();
 render();
@@ -323,11 +169,7 @@ render();
 function placeOrder(){
 let name=document.getElementById("custName").value;
 let phone=document.getElementById("custPhone").value;
-
-if(name==""||phone==""){
-alert("Enter customer details");
-return;
-}
+if(name==""||phone==""){alert("Enter details");return}
 
 let id="ORD"+Date.now();
 let total=0;
@@ -338,34 +180,12 @@ msg+=`${products[i].name} - ₹${products[i].sp}%0A`;
 total+=products[i].sp;
 profit+=(products[i].sp-products[i].cp);
 });
-
-msg+=`Total: ₹${total}`;
-
 sales+=total;
 orders++;
 
 localStorage.setItem("sales",sales);
 localStorage.setItem("profit",profit);
 localStorage.setItem("orders",orders);
-localStorage.setItem("products",JSON.stringify(products));
-
-let wa=localStorage.getItem("wa");
-window.open(`https://wa.me/${wa}?text=${msg}`);
-
-cart=[];
-closeCart();
-render();
-         }
-
-msg+=`Total: ₹${total}`;
-
-sales+=total;
-orders++;
-
-localStorage.setItem("sales",sales);
-localStorage.setItem("profit",profit);
-localStorage.setItem("orders",orders);
-localStorage.setItem("products",JSON.stringify(products));
 
 let wa=localStorage.getItem("wa");
 window.open(`https://wa.me/${wa}?text=${msg}`);
@@ -374,20 +194,21 @@ cart=[];
 closeCart();
 render();
 }
+
 function login(){
 let u=prompt("Username");
 let p=prompt("Password");
-let cred=JSON.parse(localStorage.getItem("login"));
-if(u==cred.u&&p==cred.p){
+let c=JSON.parse(localStorage.getItem("cred"));
+if(u==c.u&&p==c.p){
 admin=true;
-document.getElementById("adminPanel").style.display="block";
+document.getElementById("adminPanel").classList.remove("hidden");
 render();
 }
 }
 
 function logout(){
 admin=false;
-document.getElementById("adminPanel").style.display="none";
+document.getElementById("adminPanel").classList.add("hidden");
 render();
 }
 
@@ -397,78 +218,50 @@ let sp=Number(prompt("Selling Price"));
 let cp=Number(prompt("Cost Price"));
 let st=Number(prompt("Stock"));
 let unit=prompt("Unit");
-products.push({name:n,sp,cp,stock:st,unit});
-localStorage.setItem("products",JSON.stringify(products));
+products.push({name:n,sp,cp,stock:st,unit,sold:0});
 render();
 }
 
 function edit(i){
-products[i].sp=Number(prompt("New SP",products[i].sp));
-products[i].stock=Number(prompt("New Stock",products[i].stock));
-localStorage.setItem("products",JSON.stringify(products));
+let p=products[i];
+p.name=prompt("Name",p.name);
+p.sp=Number(prompt("SP",p.sp));
+p.cp=Number(prompt("CP",p.cp));
+p.stock=Number(prompt("Stock",p.stock));
+p.unit=prompt("Unit",p.unit);
 render();
 }
 
 function del(i){
 products.splice(i,1);
-localStorage.setItem("products",JSON.stringify(products));
 render();
 }
 
-function changeLogin(){
+function changeCred(){
 let u=prompt("New Username");
 let p=prompt("New Password");
-localStorage.setItem("login",JSON.stringify({u,p}));
+localStorage.setItem("cred",JSON.stringify({u,p}));
+alert("Changed");
 }
 
 function changeWA(){
-let w=prompt("New WhatsApp with country code");
-localStorage.setItem("wa",w);
+let n=prompt("WhatsApp Number with country code");
+localStorage.setItem("wa",n);
+alert("Updated");
 }
 
 function toggleDark(){
 document.body.classList.toggle("dark");
 }
 
-function uploadLogo(e){
-let reader=new FileReader();
-reader.onload=function(){
-localStorage.setItem("logo",reader.result);
-document.getElementById("logoImg").src=reader.result;
-}
-reader.readAsDataURL(e.target.files[0]);
-}
-
-document.getElementById("logoImg").src=localStorage.getItem("logo")||"";
-
-function backup(){
-alert(JSON.stringify(products));
-}
-
-function restore(){
-let d=prompt("Paste Backup");
-if(d){
-products=JSON.parse(d);
-localStorage.setItem("products",d);
-render();
-}
+function search(v){
+v=v.toLowerCase();
+document.querySelectorAll(".card").forEach(c=>{
+c.style.display=c.innerText.toLowerCase().includes(v)?"block":"none"
+});
 }
 
 render();
-
 </script>
-  
-<div id="cartPopup" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);justify-content:center;align-items:center;">
-<div style="background:white;padding:15px;border-radius:10px;width:90%;max-width:350px;">
-<h3>🛒 Your Cart</h3>
-<div id="cartItems"></div>
-<input id="custName" placeholder="Customer Name" style="width:100%;margin:5px 0;padding:6px;">
-<input id="custPhone" placeholder="Customer Phone" style="width:100%;margin:5px 0;padding:6px;">
-<br>
-<button onclick="placeOrder()">Place Order</button>
-<button onclick="clearCart()">Clear</button>
-<button onclick="closeCart()">Close</button>
-</div>
-</div>
 </body>
 </html>
