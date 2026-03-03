@@ -177,7 +177,7 @@ border-radius:6px;
 
 </div>
 
-<div class="cartBtn" onclick="checkout()">
+<div class="cartBtn" onclick="openCart()">
 Cart ₹<span id="cartTotal">0</span>
 </div>
 
@@ -271,6 +271,71 @@ cart=[];
 render();
 }
 
+  function openCart(){
+if(cart.length==0) return alert("Cart Empty");
+let html="";
+let total=0;
+cart.forEach((i,index)=>{
+html+=`
+<div>
+${products[i].name} - ₹${products[i].sp}
+<button onclick="removeItem(${index})">❌</button>
+</div>`;
+total+=products[i].sp;
+});
+document.getElementById("cartItems").innerHTML=html;
+document.getElementById("cartPopup").style.display="flex";
+}
+
+function closeCart(){
+document.getElementById("cartPopup").style.display="none";
+}
+
+function removeItem(index){
+let prodIndex=cart[index];
+products[prodIndex].stock++;
+cart.splice(index,1);
+render();
+openCart();
+}
+
+function clearCart(){
+cart=[];
+render();
+closeCart();
+}
+
+function placeOrder(){
+let name=document.getElementById("custName").value;
+let phone=document.getElementById("custPhone").value;
+
+let id="ORD"+Date.now();
+let msg=`Order ID:${id}%0AName:${name}%0APhone:${phone}%0A`;
+
+let total=0;
+cart.forEach(i=>{
+msg+=`${products[i].name} - ₹${products[i].sp}%0A`;
+total+=products[i].sp;
+profit+=(products[i].sp-products[i].cp);
+});
+
+msg+=`Total: ₹${total}`;
+
+sales+=total;
+orders++;
+
+localStorage.setItem("sales",sales);
+localStorage.setItem("profit",profit);
+localStorage.setItem("orders",orders);
+localStorage.setItem("products",JSON.stringify(products));
+
+let wa=localStorage.getItem("wa");
+window.open(`https://wa.me/${wa}?text=${msg}`);
+
+cart=[];
+closeCart();
+render();
+}
 function login(){
 let u=prompt("Username");
 let p=prompt("Password");
@@ -354,6 +419,18 @@ render();
 render();
 
 </script>
-
+  
+<div id="cartPopup" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);justify-content:center;align-items:center;">
+<div style="background:white;padding:15px;border-radius:10px;width:90%;max-width:350px;">
+<h3>🛒 Your Cart</h3>
+<div id="cartItems"></div>
+<input id="custName" placeholder="Customer Name" style="width:100%;margin:5px 0;padding:6px;">
+<input id="custPhone" placeholder="Customer Phone" style="width:100%;margin:5px 0;padding:6px;">
+<br>
+<button onclick="placeOrder()">Place Order</button>
+<button onclick="clearCart()">Clear</button>
+<button onclick="closeCart()">Close</button>
+</div>
+</div>
 </body>
 </html>
