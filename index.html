@@ -8,7 +8,10 @@
 body{
 font-family:Arial;
 margin:0;
-background:#f5f5f5;
+background: linear-gradient(rgba(255,255,255,0.9), rgba(255,255,255,0.9)),
+url("https://images.unsplash.com/photo-1604719312566-8912e9c8a213?auto=format&fit=crop&w=1200&q=80");
+background-size:cover;
+background-attachment:fixed;
 }
 
 /* Header */
@@ -22,24 +25,18 @@ align-items:center;
 }
 
 button{
-padding:6px 12px;
+padding:6px 10px;
 border:none;
 border-radius:6px;
 cursor:pointer;
 }
 
-.login-btn{
-background:white;
-color:#2e7d32;
-font-weight:bold;
-}
-
 /* Hero */
 .hero{
-background:#66bb6a;
-color:white;
 text-align:center;
-padding:40px 20px;
+color:#2e7d32;
+padding:30px;
+background:rgba(255,255,255,0.8);
 }
 
 /* Products */
@@ -54,11 +51,7 @@ padding:20px;
 background:white;
 padding:15px;
 border-radius:10px;
-box-shadow:0 4px 10px rgba(0,0,0,0.1);
-}
-
-.card h4{
-margin:5px 0;
+box-shadow:0 4px 12px rgba(0,0,0,0.1);
 }
 
 .price{
@@ -66,11 +59,21 @@ color:#2e7d32;
 font-weight:bold;
 }
 
-.admin-actions{
-margin-top:10px;
+.admin-panel{
+text-align:center;
+display:none;
 }
 
-/* Login Modal */
+.cart-box{
+position:fixed;
+bottom:10px;
+right:10px;
+background:#2e7d32;
+color:white;
+padding:10px 15px;
+border-radius:10px;
+}
+
 .modal{
 display:none;
 position:fixed;
@@ -87,30 +90,14 @@ align-items:center;
 background:white;
 padding:20px;
 border-radius:10px;
-width:300px;
+width:250px;
 text-align:center;
 }
 
 input{
-padding:8px;
-margin:5px;
+padding:6px;
+margin:4px;
 width:90%;
-}
-
-.admin-panel{
-text-align:center;
-margin:15px;
-display:none;
-}
-
-.add-btn{
-background:#ff9800;
-color:white;
-}
-
-.logout-btn{
-background:red;
-color:white;
 }
 
 </style>
@@ -120,20 +107,24 @@ color:white;
 
 <header>
 <h3>🛒 Special Kirana Store</h3>
-<button class="login-btn" onclick="openLogin()">Login</button>
+<button onclick="openLogin()">Login</button>
 </header>
 
 <div class="hero">
 <h2>Fresh Kirana Items</h2>
-<p>Quality Grocery at Best Price</p>
+<p>Best Quality Grocery at Lowest Price</p>
 </div>
 
 <div class="admin-panel" id="adminPanel">
-<button class="add-btn" onclick="addItem()">Add Item</button>
-<button class="logout-btn" onclick="logout()">Logout</button>
+<button onclick="addItem()">Add Item</button>
+<button onclick="logout()">Logout</button>
 </div>
 
 <div class="products" id="productList"></div>
+
+<div class="cart-box" id="cartBox">
+Cart: ₹0
+</div>
 
 <!-- Login Modal -->
 <div class="modal" id="loginModal">
@@ -147,10 +138,11 @@ color:white;
 
 <script>
 
-let isAdmin = false;
+let isAdmin=false;
+let cartTotal=0;
 
-let defaultItems = [
-{name:"Atta (5kg)",price:250},
+let defaultItems=[
+{name:"Atta (1kg)",price:30},
 {name:"Rice (1kg)",price:55},
 {name:"Dal (1kg)",price:120},
 {name:"Sugar (1kg)",price:45},
@@ -173,88 +165,87 @@ let defaultItems = [
 ];
 
 if(!localStorage.getItem("items")){
-localStorage.setItem("items", JSON.stringify(defaultItems));
+localStorage.setItem("items",JSON.stringify(defaultItems));
 }
 
 function displayItems(){
-let items = JSON.parse(localStorage.getItem("items"));
-let productList = document.getElementById("productList");
-productList.innerHTML = "";
-
+let items=JSON.parse(localStorage.getItem("items"));
+let html="";
 items.forEach((item,index)=>{
-productList.innerHTML += `
+html+=`
 <div class="card">
 <h4>${item.name}</h4>
 <p class="price">₹${item.price}</p>
-${isAdmin ? `
-<div class="admin-actions">
+<label>Qty:</label>
+<input type="number" min="1" value="1" id="qty${index}">
+<br><br>
+<button onclick="addToCart(${item.price},${index})">Add to Cart</button>
+${isAdmin?`
+<br><br>
 <button onclick="editItem(${index})">Edit</button>
 <button onclick="deleteItem(${index})">Delete</button>
-</div>
-` : ""}
+`:""}
 </div>
 `;
 });
+document.getElementById("productList").innerHTML=html;
 }
 
-displayItems();
+function addToCart(price,index){
+let qty=document.getElementById("qty"+index).value;
+cartTotal+=price*qty;
+document.getElementById("cartBox").innerText="Cart: ₹"+cartTotal;
+}
 
 function openLogin(){
 document.getElementById("loginModal").style.display="flex";
 }
 
 function login(){
-let user = document.getElementById("username").value;
-let pass = document.getElementById("password").value;
-
+let user=document.getElementById("username").value;
+let pass=document.getElementById("password").value;
 if(user==="admin" && pass==="1234"){
 isAdmin=true;
 document.getElementById("adminPanel").style.display="block";
-document.querySelector(".login-btn").style.display="none";
 document.getElementById("loginModal").style.display="none";
 displayItems();
-}else{
-alert("Wrong Credentials");
 }
 }
 
 function logout(){
 isAdmin=false;
 document.getElementById("adminPanel").style.display="none";
-document.querySelector(".login-btn").style.display="inline";
 displayItems();
 }
 
 function addItem(){
-let name = prompt("Enter Item Name");
-let price = prompt("Enter Price");
-
+let name=prompt("Item Name");
+let price=prompt("Price");
 if(name && price){
-let items = JSON.parse(localStorage.getItem("items"));
+let items=JSON.parse(localStorage.getItem("items"));
 items.push({name:name,price:price});
-localStorage.setItem("items", JSON.stringify(items));
+localStorage.setItem("items",JSON.stringify(items));
 displayItems();
 }
 }
 
 function editItem(index){
-let items = JSON.parse(localStorage.getItem("items"));
-let newName = prompt("Edit Name", items[index].name);
-let newPrice = prompt("Edit Price", items[index].price);
-
-if(newName && newPrice){
+let items=JSON.parse(localStorage.getItem("items"));
+let newName=prompt("Edit Name",items[index].name);
+let newPrice=prompt("Edit Price",items[index].price);
 items[index]={name:newName,price:newPrice};
-localStorage.setItem("items", JSON.stringify(items));
+localStorage.setItem("items",JSON.stringify(items));
 displayItems();
-}
 }
 
 function deleteItem(index){
-let items = JSON.parse(localStorage.getItem("items"));
+let items=JSON.parse(localStorage.getItem("items"));
 items.splice(index,1);
-localStorage.setItem("items", JSON.stringify(items));
+localStorage.setItem("items",JSON.stringify(items));
 displayItems();
 }
+
+displayItems();
 
 </script>
 
