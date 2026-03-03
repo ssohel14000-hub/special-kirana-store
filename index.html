@@ -5,38 +5,103 @@
 <title>Special Kirana Store</title>
 
 <style>
-body{margin:0;font-family:Arial;background:#f4f6f5;transition:.3s}
-.dark{background:#1e1e1e;color:white}
-header{background:#2e7d32;color:white;padding:10px;display:flex;justify-content:space-between;align-items:center}
-button{background:#2e7d32;color:white;border:none;padding:6px 10px;margin:3px;border-radius:5px;font-size:12px}
+
+body{
+margin:0;
+font-family:Arial;
+background:#f4f6f5;
+transition:.3s;
+}
+
+.dark{
+background:#121212;
+color:white;
+}
+
+header{
+background:#2e7d32;
+color:white;
+padding:12px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+font-weight:bold;
+}
+
+button{
+background:#2e7d32;
+color:white;
+border:none;
+padding:6px 10px;
+margin:4px;
+border-radius:6px;
+font-size:13px;
+}
+
 .hero{
-height:200px;
-background:
-linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)),
+min-height:260px;
+background-image:
+linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)),
 url("https://images.unsplash.com/photo-1604719312566-8912e9c8a213?auto=format&fit=crop&w=1200&q=80");
 background-size:cover;
 background-position:center;
 display:flex;
-flex-direction:column;
 justify-content:center;
 align-items:center;
 color:white;
 text-align:center;
+font-size:22px;
+font-weight:bold;
 }
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;padding:10px}
-.card{background:white;padding:10px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
-.dark .card{background:#2a2a2a}
-.low{color:red;font-size:12px}
-.fixed{position:fixed;bottom:15px;right:15px}
-.hidden{display:none}
-input{padding:5px;margin:3px;border-radius:5px;border:1px solid #ccc}
-.pos-controls button{padding:4px 8px}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+gap:10px;
+padding:10px;
+}
+
+.card{
+background:white;
+padding:10px;
+border-radius:10px;
+box-shadow:0 3px 10px rgba(0,0,0,.1);
+}
+
+.dark .card{
+background:#222;
+}
+
+.fixed{
+position:fixed;
+bottom:10px;
+right:10px;
+}
+
+.hidden{
+display:none;
+}
+
+.low{
+color:red;
+font-weight:bold;
+}
+
+input{
+padding:5px;
+border-radius:5px;
+border:1px solid #ccc;
+margin:3px;
+width:120px;
+}
+
 </style>
 </head>
+
 <body>
 
 <header>
-<b>🛒 Special Kirana Store</b>
+🛒 Special Kirana Store
 <div>
 <button onclick="toggleDark()">🌙</button>
 <button onclick="login()">Admin</button>
@@ -44,14 +109,14 @@ input{padding:5px;margin:3px;border-radius:5px;border:1px solid #ccc}
 </header>
 
 <div class="hero">
-<h2>Welcome in Special Kirana Store</h2>
+Welcome in Special Kirana Store
 </div>
 
 <div style="padding:8px">
 📊 Sales ₹<span id="sales">0</span> |
 💰 Profit ₹<span id="profit">0</span> |
 🧾 Orders <span id="orders">0</span> |
-💸 GST ₹<span id="gstTotal">0</span>
+💵 GST ₹<span id="gstTotal">0</span>
 </div>
 
 <div id="adminPanel" class="hidden" style="padding:8px">
@@ -65,7 +130,7 @@ input{padding:5px;margin:3px;border-radius:5px;border:1px solid #ccc}
 </div>
 
 <div style="padding:10px">
-<input id="codeInput" placeholder="Enter Product Code (ATTA01)">
+<input id="codeInput" placeholder="Enter Product Code">
 <button onclick="addByCode()">Add By Code</button>
 </div>
 
@@ -76,178 +141,166 @@ input{padding:5px;margin:3px;border-radius:5px;border:1px solid #ccc}
 </div>
 
 <script>
-let products=JSON.parse(localStorage.getItem("products"))||[
-{name:"Atta",code:"ATTA01",sp:30,cp:20,stock:25,unit:"kg",sold:0},
-{name:"Rice",code:"RICE01",sp:55,cp:40,stock:20,unit:"kg",sold:0}
+
+let products = JSON.parse(localStorage.getItem("products")) || [
+{name:"Atta",code:"ATTA01",sp:30,cp:25,stock:20,unit:"kg"},
+{name:"Rice",code:"RICE01",sp:55,cp:48,stock:20,unit:"kg"},
+{name:"Chana",code:"CHANA01",sp:80,cp:70,stock:50,unit:"kg"}
 ];
 
-let cart=[];
 let sales=Number(localStorage.getItem("sales"))||0;
 let profit=Number(localStorage.getItem("profit"))||0;
 let orders=Number(localStorage.getItem("orders"))||0;
-let gstCollected=Number(localStorage.getItem("gstCollected"))||0;
-let gst=Number(localStorage.getItem("gst"))||5;
+let gstPercent=Number(localStorage.getItem("gstPercent"))||5;
+let whatsapp=localStorage.getItem("wa")||"91XXXXXXXXXX";
 let admin=false;
+let cartTotal=0;
 
-if(!localStorage.getItem("cred")){
-localStorage.setItem("cred",JSON.stringify({u:"admin",p:"1234"}));
-}
-if(!localStorage.getItem("wa")){
-localStorage.setItem("wa","919876543210");
-}
-
-function clean(v){return Number((v||"").toString().replace(/[^0-9]/g,''))||0;}
+let user=localStorage.getItem("user")||"admin";
+let pass=localStorage.getItem("pass")||"1234";
 
 function render(){
-let html="";
+document.getElementById("products").innerHTML="";
 products.forEach((p,i)=>{
-html+=`
-<div class="card">
+let card=document.createElement("div");
+card.className="card";
+
+card.innerHTML=`
 <b>${p.name}</b><br>
 Code: ${p.code}<br>
 ₹${p.sp}<br>
-Stock: ${p.stock} ${p.unit}
-${p.stock<5?'<div class="low">Low Stock</div>':""}
-<br>
-<div class="pos-controls">
-<button onclick="minus(${i})">-</button>
-<span id="qty${i}">0</span>
-<button onclick="plus(${i})">+</button>
-</div>
-</div>`;
+Stock: ${p.stock} ${p.unit || ""}<br>
+<button onclick="addCart(${i})">+</button>
+`;
+
+if(admin){
+card.innerHTML+=`
+<button onclick="editProduct(${i})">Edit</button>
+<button onclick="deleteProduct(${i})">Delete</button>
+`;
+}
+
+if(p.stock<=5){
+card.innerHTML+=`<div class="low">Low Stock</div>`;
+}
+
+document.getElementById("products").appendChild(card);
 });
-document.getElementById("products").innerHTML=html;
+
 updateStats();
+}
+
+function addCart(i){
+if(products[i].stock>0){
+products[i].stock--;
+cartTotal+=products[i].sp;
+render();
 updateCart();
 }
-render();
+}
+
+function updateCart(){
+document.getElementById("cartTotal").innerText=cartTotal;
+}
 
 function updateStats(){
 document.getElementById("sales").innerText=sales;
 document.getElementById("profit").innerText=profit;
 document.getElementById("orders").innerText=orders;
-document.getElementById("gstTotal").innerText=gstCollected;
-}
-
-function plus(i){
-if(products[i].stock<=0)return alert("Out of Stock");
-products[i].stock--;
-cart.push({i,qty:1});
-render();
-}
-function minus(i){
-let index=cart.findIndex(c=>c.i===i);
-if(index>-1){
-cart.splice(index,1);
-products[i].stock++;
-render();
-}
-}
-
-function updateCart(){
-let total=0;
-cart.forEach(c=> total+=products[c.i].sp*c.qty);
-document.getElementById("cartTotal").innerText=total;
-}
-
-function addByCode(){
-let code=document.getElementById("codeInput").value.trim();
-let index=products.findIndex(p=>p.code===code);
-if(index>-1){
-plus(index);
-document.getElementById("codeInput").value="";
-}else alert("Invalid Code");
-}
-
-function checkout(){
-if(cart.length==0)return alert("Cart Empty");
-
-let name=prompt("Customer Name");
-let phone=prompt("Customer Phone");
-
-let subTotal=0;
-cart.forEach(c=>subTotal+=products[c.i].sp);
-
-let gstAmount=subTotal*(gst/100);
-let final=subTotal+gstAmount;
-
-let bill=`Invoice\n\n`;
-bill+=`Subtotal: ₹${subTotal}\nGST(${gst}%): ₹${gstAmount.toFixed(2)}\nTotal: ₹${final.toFixed(2)}\n`;
-
-sales+=final;
-gstCollected+=gstAmount;
-orders++;
-
-cart.forEach(c=>{
-let p=products[c.i];
-profit+=(p.sp-p.cp);
-});
-
+document.getElementById("gstTotal").innerText=Math.round((sales*gstPercent)/100);
 localStorage.setItem("products",JSON.stringify(products));
 localStorage.setItem("sales",sales);
 localStorage.setItem("profit",profit);
 localStorage.setItem("orders",orders);
-localStorage.setItem("gstCollected",gstCollected);
+}
 
-let wa=localStorage.getItem("wa");
-window.open(`https://wa.me/${wa}?text=${encodeURIComponent(bill)}`);
-
-cart=[];
+function checkout(){
+if(cartTotal==0)return;
+sales+=cartTotal;
+profit+=Math.round(cartTotal*0.2);
+orders++;
+let text="New Order%0ATotal: ₹"+cartTotal;
+window.open("https://wa.me/"+whatsapp+"?text="+text);
+cartTotal=0;
 render();
+updateCart();
 }
 
 function login(){
 let u=prompt("Username");
 let p=prompt("Password");
-let c=JSON.parse(localStorage.getItem("cred"));
-if(u==c.u&&p==c.p){
+if(u==user && p==pass){
 admin=true;
 document.getElementById("adminPanel").classList.remove("hidden");
+render();
 }
 }
+
 function logout(){
 admin=false;
 document.getElementById("adminPanel").classList.add("hidden");
+render();
 }
 
 function addProduct(){
-let n=prompt("Name");
-let code=prompt("Product Code (ATTA01)");
-let sp=clean(prompt("SP"));
-let cp=clean(prompt("CP"));
-let st=clean(prompt("Stock"));
-let unit=prompt("Unit");
-products.push({name:n,code:code,sp,cp,stock:st,unit,sold:0});
-localStorage.setItem("products",JSON.stringify(products));
+let name=prompt("Name");
+let code=prompt("Code");
+let sp=prompt("Selling Price");
+let cp=prompt("Cost Price");
+let stock=prompt("Stock");
+let unit=prompt("Unit (kg/pc/litre)");
+
+products.push({name,code,sp:Number(sp),cp:Number(cp),stock:Number(stock),unit});
+render();
+}
+
+function editProduct(i){
+let sp=prompt("New Selling Price",products[i].sp);
+let stock=prompt("New Stock",products[i].stock);
+products[i].sp=Number(sp);
+products[i].stock=Number(stock);
+render();
+}
+
+function deleteProduct(i){
+products.splice(i,1);
 render();
 }
 
 function changeLogin(){
-let u=prompt("New Username");
-let p=prompt("New Password");
-localStorage.setItem("cred",JSON.stringify({u,p}));
-alert("Login Updated");
+user=prompt("New Username");
+pass=prompt("New Password");
+localStorage.setItem("user",user);
+localStorage.setItem("pass",pass);
 }
+
 function changeWA(){
-let n=prompt("New WhatsApp with country code");
-localStorage.setItem("wa",n);
-alert("WhatsApp Updated");
+whatsapp=prompt("New WhatsApp Number with country code");
+localStorage.setItem("wa",whatsapp);
 }
+
 function setGST(){
-gst=clean(prompt("GST %"));
-localStorage.setItem("gst",gst);
-alert("GST Updated");
+gstPercent=prompt("GST %");
+localStorage.setItem("gstPercent",gstPercent);
+updateStats();
 }
-function toggleDark(){
-document.body.classList.toggle("dark");
-}
+
 function backup(){
 alert(JSON.stringify(products));
 }
+
 function restore(){
-let d=prompt("Paste Backup");
-if(d){products=JSON.parse(d);localStorage.setItem("products",d);render();}
+let data=prompt("Paste Backup Data");
+products=JSON.parse(data);
+render();
 }
+
+function toggleDark(){
+document.body.classList.toggle("dark");
+}
+
+render();
+
 </script>
 </body>
 </html>
