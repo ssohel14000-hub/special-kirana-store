@@ -6,179 +6,44 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body{
-margin:0;
-font-family:Arial, sans-serif;
-background:#f4f8f4;
-}
-
-/* Header */
-header{
-background:#2e7d32;
-color:white;
-padding:15px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-position:sticky;
-top:0;
-z-index:1000;
-}
-
-/* Hero */
-.hero{
-position:relative;
-height:230px;
-overflow:hidden;
-}
-
-.hero img{
-width:100%;
-height:230px;
-object-fit:cover;
-position:absolute;
-z-index:-1;
-}
-
-.hero-overlay{
-background:rgba(0,0,0,0.5);
-height:100%;
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
-color:white;
-text-align:center;
-}
-
-/* Controls */
-.controls{
-text-align:center;
-padding:10px;
-}
-
-.controls input{
-padding:6px;
-width:60%;
-max-width:300px;
-border-radius:6px;
-border:1px solid #ccc;
-}
-
-.filter-btn{
-margin:5px;
-background:#2e7d32;
-color:white;
-border:none;
-padding:5px 10px;
-border-radius:5px;
-cursor:pointer;
-}
-
-/* Products */
-.products{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
-gap:15px;
-padding:15px;
-}
-
-.card{
-background:white;
-padding:12px;
-border-radius:12px;
-box-shadow:0 6px 18px rgba(0,0,0,0.1);
-transition:0.3s;
-}
-
-.card:hover{
-transform:translateY(-4px);
-}
-
-.price{
-color:#2e7d32;
-font-weight:bold;
-}
-
-button{
-background:#2e7d32;
-color:white;
-border:none;
-padding:5px 8px;
-border-radius:5px;
-cursor:pointer;
-margin-top:5px;
-}
-
-/* Cart */
-.cart-box{
-position:fixed;
-bottom:15px;
-right:15px;
-background:#2e7d32;
-color:white;
-padding:10px;
-border-radius:10px;
-cursor:pointer;
-}
-
-/* Cart Popup */
-.cart-popup{
-display:none;
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,0.5);
-justify-content:center;
-align-items:center;
-}
-
-.cart-content{
-background:white;
-width:90%;
-max-width:350px;
-padding:15px;
-border-radius:10px;
-}
-
-.cart-content ul{
-padding-left:20px;
-}
-
-.store-info{
-background:white;
-padding:15px;
-margin:20px;
-border-radius:10px;
-box-shadow:0 4px 12px rgba(0,0,0,0.1);
-text-align:center;
-}
-
+body{margin:0;font-family:Arial;background:#f4f8f4;transition:0.3s}
+.dark{background:#121212;color:white}
+header{background:#2e7d32;color:white;padding:10px;display:flex;justify-content:space-between;align-items:center}
+.logo{height:40px}
+.hero{position:relative;height:150px;text-align:center;color:white;overflow:hidden}
+.hero img{width:100%;height:150px;object-fit:cover;position:absolute;z-index:-1}
+.hero-overlay{background:rgba(0,0,0,0.5);height:100%;display:flex;align-items:center;justify-content:center}
+.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;padding:10px}
+.card{background:white;padding:10px;border-radius:8px;box-shadow:0 3px 8px rgba(0,0,0,0.1)}
+.dark .card{background:#1e1e1e}
+button{background:#2e7d32;color:white;border:none;padding:5px 8px;border-radius:5px;margin-top:4px;cursor:pointer}
+.cart-box{position:fixed;bottom:15px;right:15px;background:#2e7d32;color:white;padding:10px;border-radius:10px;cursor:pointer}
+.popup{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);justify-content:center;align-items:center}
+.popup-content{background:white;width:95%;max-width:360px;padding:15px;border-radius:10px;max-height:90vh;overflow:auto}
+.dark .popup-content{background:#1e1e1e;color:white}
+input{padding:5px;margin:5px 0;width:95%}
+.dashboard{margin:10px;background:white;padding:10px;border-radius:8px}
+.dark .dashboard{background:#1e1e1e}
 </style>
 </head>
 
 <body>
 
 <header>
-<h3>🛒 Special Kirana Store</h3>
+<img id="storeLogo" class="logo">
+<div>
+<button onclick="toggleDark()">🌙</button>
+<input type="file" onchange="uploadLogo(event)">
+</div>
 </header>
 
 <div class="hero">
 <img src="https://images.pexels.com/photos/264636/pexels-photo-264636.jpeg">
-<div class="hero-overlay">
-<h2>Fresh Grocery at Best Price</h2>
-<p>Quality You Can Trust</p>
-</div>
+<div class="hero-overlay"><h3>Special Kirana Store</h3></div>
 </div>
 
-<div class="controls">
-<input type="text" id="search" placeholder="Search product..." onkeyup="renderItems()"><br>
-<button class="filter-btn" onclick="setCategory('All')">All</button>
-<button class="filter-btn" onclick="setCategory('Grocery')">Grocery</button>
-<button class="filter-btn" onclick="setCategory('Personal')">Personal</button>
-<button class="filter-btn" onclick="setCategory('Snacks')">Snacks</button>
+<div class="dashboard">
+<b>📊 Today Sales: ₹<span id="dailySales">0</span></b>
 </div>
 
 <div class="products" id="productList"></div>
@@ -187,116 +52,142 @@ text-align:center;
 Cart ₹<span id="cartTotal">0</span>
 </div>
 
-<div class="cart-popup" id="cartPopup">
-<div class="cart-content">
+<div class="popup" id="cartPopup">
+<div class="popup-content">
 <h3>Your Cart</h3>
 <ul id="cartItems"></ul>
-<p><b>Total: ₹<span id="popupTotal">0</span></b></p>
+<b>Total: ₹<span id="popupTotal">0</span></b>
+
+<input type="text" id="custName" placeholder="Customer Name">
+<input type="text" id="custPhone" placeholder="Phone Number">
+
+<button onclick="placeOrder()">Place Order</button>
 <button onclick="clearCart()">Clear Cart</button>
-<br><br>
-<a id="waLink" target="_blank">
-<button style="background:#25D366;">Order on WhatsApp</button>
-</a>
-<br><br>
 <button onclick="closeCart()">Close</button>
 </div>
 </div>
 
-<div class="store-info">
-<h3>🏪 Store Information</h3>
-<p>📍 Baghniabari</p>
-<p>📞 +91 9876543210</p>
-<p>🕒 Open: 7 AM – 9 PM</p>
+<div class="dashboard">
+<h3>📜 Order History</h3>
+<ul id="orderHistory"></ul>
 </div>
 
 <script>
-
 let whatsappNumber="919876543210";
-let category="All";
 let cart=[];
+let dailySales=Number(localStorage.getItem("sales"))||0;
+let orders=JSON.parse(localStorage.getItem("orders"))||[];
+let darkMode=localStorage.getItem("dark");
+
+if(darkMode==="on"){document.body.classList.add("dark")}
+
+document.getElementById("dailySales").innerText=dailySales;
 
 let items=[
-{name:"Atta",price:30,cat:"Grocery"},
-{name:"Rice",price:55,cat:"Grocery"},
-{name:"Dal",price:120,cat:"Grocery"},
-{name:"Sugar",price:45,cat:"Grocery"},
-{name:"Salt",price:25,cat:"Grocery"},
-{name:"Oil",price:140,cat:"Grocery"},
-{name:"Tea",price:220,cat:"Grocery"},
-{name:"Milk Powder",price:320,cat:"Grocery"},
-{name:"Biscuits",price:30,cat:"Snacks"},
-{name:"Maggi",price:15,cat:"Snacks"},
-{name:"Chips",price:20,cat:"Snacks"},
-{name:"Cornflakes",price:180,cat:"Snacks"},
-{name:"Soap",price:35,cat:"Personal"},
-{name:"Shampoo",price:150,cat:"Personal"},
-{name:"Toothpaste",price:90,cat:"Personal"},
-{name:"Detergent",price:110,cat:"Personal"},
-{name:"Masala",price:20,cat:"Grocery"},
-{name:"Butter",price:50,cat:"Grocery"},
-{name:"Jam",price:140,cat:"Snacks"},
-{name:"Chana",price:80,cat:"Grocery"}
+{name:"Atta",price:30},{name:"Rice",price:55},{name:"Dal",price:120},
+{name:"Sugar",price:45},{name:"Salt",price:25},{name:"Oil",price:140},
+{name:"Tea",price:220},{name:"Milk Powder",price:320},{name:"Biscuits",price:30},
+{name:"Maggi",price:15},{name:"Soap",price:35},{name:"Shampoo",price:150},
+{name:"Toothpaste",price:90},{name:"Detergent",price:110},{name:"Masala",price:20}
 ];
 
-function setCategory(cat){
-category=cat;
-renderItems();
-}
-
 function renderItems(){
-let search=document.getElementById("search").value.toLowerCase();
 let html="";
-items.filter(item=>{
-return (category==="All" || item.cat===category)
-&& item.name.toLowerCase().includes(search);
-}).forEach((item,index)=>{
-html+=`
-<div class="card">
+items.forEach((item,i)=>{
+html+=`<div class="card">
 <h4>${item.name}</h4>
-<p class="price">₹${item.price}</p>
-Qty: <input type="number" value="1" min="1" id="qty${index}" style="width:50px">
-<br>
-<button onclick="addToCart(${index})">Add to Cart</button>
-</div>`;
+₹${item.price}<br>
+Qty:<input type="number" value="1" id="qty${i}" style="width:50px">
+<button onclick="addToCart(${i})">Add</button>
+</div>`
 });
 document.getElementById("productList").innerHTML=html;
 }
+renderItems();
 
-function addToCart(index){
-let qty=document.getElementById("qty"+index).value;
-cart.push({...items[index],qty:Number(qty)});
+function addToCart(i){
+let qty=Number(document.getElementById("qty"+i).value);
+cart.push({...items[i],qty});
 updateCart();
 }
 
 function updateCart(){
-let total=0;
-let list="";
-cart.forEach(item=>{
-total+=item.price*item.qty;
-list+=`<li>${item.name} x ${item.qty}</li>`;
+let total=0,list="";
+cart.forEach((c,index)=>{
+total+=c.price*c.qty;
+list+=`<li>${c.name} x ${c.qty} <button onclick="removeItem(${index})">❌</button></li>`
 });
 document.getElementById("cartTotal").innerText=total;
 document.getElementById("popupTotal").innerText=total;
 document.getElementById("cartItems").innerHTML=list;
-document.getElementById("waLink").href=
-`https://wa.me/${whatsappNumber}?text=I want to order items worth ₹${total}`;
 }
 
-function openCart(){
-document.getElementById("cartPopup").style.display="flex";
-}
-
-function closeCart(){
-document.getElementById("cartPopup").style.display="none";
-}
-
-function clearCart(){
-cart=[];
+function removeItem(i){
+cart.splice(i,1);
 updateCart();
 }
 
-renderItems();
+function openCart(){document.getElementById("cartPopup").style.display="flex"}
+function closeCart(){document.getElementById("cartPopup").style.display="none"}
+function clearCart(){cart=[];updateCart()}
 
+function placeOrder(){
+let name=document.getElementById("custName").value;
+let phone=document.getElementById("custPhone").value;
+let total=document.getElementById("popupTotal").innerText;
+if(!name||!phone){alert("Fill details");return}
+
+let orderId="ORD"+Date.now();
+let date=new Date().toLocaleString();
+let text=`Order ID: ${orderId}\nName: ${name}\nPhone: ${phone}\nTotal: ₹${total}\nDate: ${date}`;
+
+dailySales+=Number(total);
+localStorage.setItem("sales",dailySales);
+document.getElementById("dailySales").innerText=dailySales;
+
+orders.push(text);
+localStorage.setItem("orders",JSON.stringify(orders));
+renderHistory();
+
+window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(text)}`);
+alert("Order Placed!");
+
+cart=[];
+updateCart();
+closeCart();
+}
+
+function renderHistory(){
+let html="";
+orders.forEach((o,i)=>{
+html+=`<li>${o}<br><button onclick="deleteOrder(${i})">Delete</button></li><hr>`
+});
+document.getElementById("orderHistory").innerHTML=html;
+}
+renderHistory();
+
+function deleteOrder(i){
+orders.splice(i,1);
+localStorage.setItem("orders",JSON.stringify(orders));
+renderHistory();
+}
+
+function toggleDark(){
+document.body.classList.toggle("dark");
+localStorage.setItem("dark",document.body.classList.contains("dark")?"on":"off");
+}
+
+function uploadLogo(e){
+let reader=new FileReader();
+reader.onload=function(){
+localStorage.setItem("logo",reader.result);
+document.getElementById("storeLogo").src=reader.result;
+}
+reader.readAsDataURL(e.target.files[0]);
+}
+if(localStorage.getItem("logo")){
+document.getElementById("storeLogo").src=localStorage.getItem("logo");
+}
 </script>
 
 </body>
