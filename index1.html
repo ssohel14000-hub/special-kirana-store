@@ -1,1 +1,631 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Special Kirana PRO POS</title>
 
+<style>
+
+/* ============================
+   GLOBAL SYSTEM STYLES
+============================= */
+
+:root{
+--primary:#1b5e20;
+--secondary:#2e7d32;
+--light:#f4f6f5;
+--dark:#121212;
+--card:#ffffff;
+--danger:#c62828;
+--warning:#f9a825;
+}
+
+body{
+margin:0;
+font-family:Arial, sans-serif;
+background:var(--light);
+transition:0.3s;
+}
+
+.dark-mode{
+background:var(--dark);
+color:white;
+}
+
+header{
+background:var(--primary);
+color:white;
+padding:15px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+button{
+background:var(--secondary);
+border:none;
+color:white;
+padding:6px 12px;
+border-radius:6px;
+cursor:pointer;
+margin:2px;
+font-size:13px;
+}
+
+input{
+padding:6px;
+border-radius:6px;
+border:1px solid #ccc;
+}
+
+.container{
+padding:10px;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+gap:10px;
+}
+
+.card{
+background:var(--card);
+border-radius:10px;
+padding:10px;
+box-shadow:0 3px 8px rgba(0,0,0,0.15);
+}
+
+.low-stock{
+color:var(--danger);
+font-size:12px;
+}
+
+.hero{
+height:180px;
+background:linear-gradient(rgba(0,0,0,.6),rgba(0,0,0,.6)),
+url('https://images.unsplash.com/photo-1604719312566-8912e0e3f75c?q=80&w=1600');
+background-size:cover;
+background-position:center;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+color:white;
+text-align:center;
+}
+
+.fixed-cart{
+position:fixed;
+bottom:20px;
+right:20px;
+border-radius:50px;
+padding:12px 20px;
+}
+
+.hidden{
+display:none;
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+<div>🛒 Special Kirana PRO</div>
+<div>
+<button onclick="UI.toggleDark()">🌙</button>
+<button onclick="Auth.login()">Admin</button>
+</div>
+</header>
+
+<div class="hero">
+<h2>Welcome to Special Kirana PRO</h2>
+<p>Enterprise Level Grocery POS</p>
+</div>
+
+<div class="container">
+
+<div id="dashboard">
+📊 Sales ₹<span id="statSales">0</span> |
+💰 Profit ₹<span id="statProfit">0</span> |
+📦 Orders <span id="statOrders">0</span>
+</div>
+
+<div id="adminPanel" style="display:none;margin:10px 0;padding:10px;border:2px solid #2e7d32;border-radius:10px;">
+<h3>⚙ Admin Control Panel</h3>
+
+<button onclick="Admin.addProduct()">➕ Add Product</button>
+<button onclick="Auth.changeCred()">🔑 Change Login</button>
+<button onclick="Admin.changeWA()">📱 Change WhatsApp</button>
+<button onclick="Admin.toggleGST()">💰 Toggle GST</button>
+<button onclick="Auth.logout()">🚪 Logout</button>
+
+<hr>
+<button onclick="Reports.viewOrders()">📜 Order Log</button>
+<button onclick="Reports.lowStock()">⚠ Low Stock</button>
+<button onclick="Reports.bestSeller()">🏆 Best Seller</button>
+<button onclick="Reports.exportJSON()">⬇ Export Orders</button>
+<b>GST Enabled:</b> <script>document.write(AppState.settings.gstEnabled);</script>
+</div>
+  
+<br>
+
+<input placeholder="Search product..." onkeyup="Product.render(this.value)">
+
+<br><br>
+
+<div id="productGrid" class="grid"></div>
+
+</div>
+
+<button class="fixed-cart" onclick="Cart.open()">
+Cart ₹<span id="cartTotal">0</span>
+</button>
+<div id="receiptPopup" style="position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;">
+<div style="background:white;padding:15px;border-radius:12px;width:90%;max-width:400px;">
+
+<h3>🧾 Order Receipt</h3>
+
+<div id="receiptItems" style="max-height:200px;overflow:auto;margin-bottom:10px;"></div>
+
+<hr>
+<b>Total: <span id="receiptTotal">₹0</span></b>
+
+<br><br>
+
+<input id="custName" placeholder="Customer Name">
+<input id="custPhone" placeholder="Customer Phone">
+
+<br><br>
+
+<button onclick="Billing.placeOrder()">Confirm Order</button>
+<button onclick="Billing.closeReceipt()">Close</button>
+
+</div>
+  </div>
+
+<script>
+
+/* ============================
+   CENTRAL APPLICATION STATE
+============================= */
+
+const AppState = {
+products: [],
+cart: [],
+sales: 0,
+profit: 0,
+orders: 0,
+isAdmin: false,
+settings: {
+gstEnabled: true,
+defaultGST: 5
+}
+};
+
+/* ============================
+   STORAGE MANAGER
+============================= */
+
+const Storage = {
+
+save(){
+localStorage.setItem("PRO_APP_STATE", JSON.stringify(AppState));
+},
+
+load(){
+let data = localStorage.getItem("PRO_APP_STATE");
+if(data){
+Object.assign(AppState, JSON.parse(data));
+}
+}
+
+};
+
+/* ============================
+   UTILITY ENGINE
+============================= */
+
+const Utils = {
+
+generateOrderID(){
+return "ORD-"+Date.now()+"-"+Math.floor(Math.random()*999);
+},
+
+formatCurrency(n){
+return "₹"+Number(n).toFixed(2);
+},
+
+safeNumber(n){
+return Number(n)||0;
+}
+
+};
+
+/* ============================
+   UI ENGINE
+============================= */
+
+const UI = {
+
+updateStats(){
+document.getElementById("statSales").innerText = AppState.sales;
+document.getElementById("statProfit").innerText = AppState.profit;
+document.getElementById("statOrders").innerText = AppState.orders;
+},
+
+updateCartTotal(){
+let total=0;
+AppState.cart.forEach(item=>{
+total+=item.subtotal;
+});
+document.getElementById("cartTotal").innerText=total.toFixed(2);
+},
+
+toggleDark(){
+document.body.classList.toggle("dark-mode");
+}
+
+};
+
+/* ============================
+   INITIALIZER
+============================= */
+
+function initApp(){
+
+Storage.load();
+
+if(AppState.products.length===0){
+AppState.products.push({
+id:1,
+name:"Atta",
+sp:30,
+cp:20,
+stock:50,
+unit:"kg",
+gst:5
+});
+}
+
+Product.render();
+UI.updateStats();
+UI.updateCartTotal();
+
+}
+
+/* ============================
+   PRODUCT ENGINE
+============================= */
+
+const Product = {
+
+render(search=""){
+let grid = document.getElementById("productGrid");
+grid.innerHTML="";
+
+AppState.products
+.filter(p=>p.name.toLowerCase().includes(search.toLowerCase()))
+.forEach(p=>{
+
+grid.innerHTML+=`
+<div class="card">
+<b>${p.name}</b><br>
+SP: ${Utils.formatCurrency(p.sp)}<br>
+Stock: ${p.stock} ${p.unit}
+${p.stock<5?'<div class="low-stock">Low Stock</div>':""}
+<br><br>
+
+<input type="number" step="0.01" min="0"
+placeholder="Qty in ${p.unit}"
+id="qty-${p.id}">
+
+<button onclick="Cart.add(${p.id})">Add</button>
+
+${AppState.isAdmin?`
+<br><br>
+<button onclick="Product.edit(${p.id})">Edit</button>
+<button onclick="Product.remove(${p.id})">Delete</button>
+`:""}
+
+</div>
+`;
+
+});
+
+Storage.save();
+},
+
+add(data){
+data.id = Date.now();
+AppState.products.push(data);
+Storage.save();
+this.render();
+},
+
+edit(id){
+let p = AppState.products.find(x=>x.id===id);
+
+let newName = prompt("Name", p.name);
+let newSP = prompt("Selling Price", p.sp);
+let newCP = prompt("Cost Price", p.cp);
+let newStock = prompt("Stock", p.stock);
+let newUnit = prompt("Unit (kg/litre/pcs)", p.unit);
+let newGST = prompt("GST %", p.gst);
+
+p.name = newName;
+p.sp = Utils.safeNumber(newSP);
+p.cp = Utils.safeNumber(newCP);
+p.stock = Utils.safeNumber(newStock);
+p.unit = newUnit;
+p.gst = Utils.safeNumber(newGST);
+
+Storage.save();
+this.render();
+},
+
+remove(id){
+if(confirm("Delete product?")){
+AppState.products = AppState.products.filter(p=>p.id!==id);
+Storage.save();
+this.render();
+}
+}
+
+};
+
+/* ============================
+   CART ENGINE (DECIMAL SAFE)
+============================= */
+
+const Cart = {
+
+add(id){
+
+let product = AppState.products.find(p=>p.id===id);
+
+let qtyInput = document.getElementById("qty-"+id).value;
+let qty = Utils.safeNumber(qtyInput);
+
+if(qty<=0){
+alert("Enter valid quantity");
+return;
+}
+
+if(qty > product.stock){
+alert("Not enough stock");
+return;
+}
+
+let gstAmount = AppState.settings.gstEnabled
+? (product.sp * qty * product.gst)/100
+: 0;
+
+let subtotal = (product.sp*qty) + gstAmount;
+
+AppState.cart.push({
+productId:id,
+name:product.name,
+qty:qty,
+unit:product.unit,
+price:product.sp,
+gst:product.gst,
+subtotal:subtotal
+});
+
+product.stock -= qty;
+
+Storage.save();
+UI.updateCartTotal();
+Product.render();
+
+},
+
+open(){
+
+if(AppState.cart.length===0){
+alert("Cart empty");
+return;
+}
+
+let summary="";
+
+AppState.cart.forEach(item=>{
+summary+=`
+${item.name}
+${item.qty} ${item.unit}
+Subtotal: ${Utils.formatCurrency(item.subtotal)}
+-------------------
+`;
+});
+
+alert(summary);
+
+}
+
+};
+  
+/* ============================
+   BILLING ENGINE (PHASE 3)
+============================= */
+
+const Billing = {
+
+openReceipt(){
+
+if(AppState.cart.length===0){
+alert("Cart empty");
+return;
+}
+
+let receiptHTML = "";
+let total = 0;
+
+AppState.cart.forEach(item=>{
+total += item.subtotal;
+
+receiptHTML += `
+<div style="display:flex;justify-content:space-between">
+<span>${item.name} (${item.qty} ${item.unit})</span>
+<span>${Utils.formatCurrency(item.subtotal)}</span>
+</div>
+`;
+});
+
+document.getElementById("receiptItems").innerHTML = receiptHTML;
+document.getElementById("receiptTotal").innerText = Utils.formatCurrency(total);
+
+document.getElementById("receiptPopup").style.display = "flex";
+},
+
+closeReceipt(){
+document.getElementById("receiptPopup").style.display = "none";
+},
+
+placeOrder(){
+
+let name = document.getElementById("custName").value;
+let phone = document.getElementById("custPhone").value;
+
+if(name==="" || phone===""){
+alert("Enter customer details");
+return;
+}
+
+let orderID = Utils.generateOrderID();
+let orderObj = {
+id: orderID,
+name: name,
+phone: phone,
+total: total,
+items: AppState.cart
+};
+Reports.saveOrder(orderObj);
+let total = 0;
+
+let message = `Order ID: ${orderID}%0AName: ${name}%0APhone: ${phone}%0A%0A`;
+
+AppState.cart.forEach(item=>{
+message += `${item.name} - ${item.qty} ${item.unit} - ${Utils.formatCurrency(item.subtotal)}%0A`;
+total += item.subtotal;
+
+let p = AppState.products.find(x=>x.id===item.productId);
+AppState.profit += (p.sp - p.cp) * item.qty;
+});
+
+message += `%0ATotal: ${Utils.formatCurrency(total)}`;
+
+AppState.sales += total;
+AppState.orders++;
+
+Storage.save();
+UI.updateStats();
+
+let wa = localStorage.getItem("wa") || "919876543210";
+window.open(`https://wa.me/${wa}?text=${message}`);
+
+AppState.cart=[];
+UI.updateCartTotal();
+this.closeReceipt();
+Product.render();
+
+}
+
+};
+
+/* ============================
+   ORDER HISTORY + REPORT ENGINE
+============================= */
+
+AppState.orderHistory = AppState.orderHistory || [];
+
+const Reports = {
+
+saveOrder(orderObj){
+AppState.orderHistory.push(orderObj);
+Storage.save();
+},
+
+viewOrders(){
+
+if(AppState.orderHistory.length===0){
+alert("No orders yet");
+return;
+}
+
+let log="ORDER HISTORY\n\n";
+
+AppState.orderHistory.forEach(o=>{
+log+=`ID: ${o.id}\nCustomer: ${o.name}\nTotal: ${Utils.formatCurrency(o.total)}\n---\n`;
+});
+
+alert(log);
+
+},
+
+exportJSON(){
+let dataStr = "data:text/json;charset=utf-8," + 
+encodeURIComponent(JSON.stringify(AppState.orderHistory));
+
+let dl = document.createElement("a");
+dl.setAttribute("href", dataStr);
+dl.setAttribute("download", "orders.json");
+dl.click();
+},
+
+lowStock(){
+
+let low = AppState.products.filter(p=>p.stock<5);
+
+if(low.length===0){
+alert("All stocks healthy");
+return;
+}
+
+let msg="LOW STOCK ALERT\n\n";
+
+low.forEach(p=>{
+msg+=`${p.name} - ${p.stock} ${p.unit}\n`;
+});
+
+alert(msg);
+
+},
+
+bestSeller(){
+
+let map={};
+
+AppState.orderHistory.forEach(o=>{
+o.items.forEach(item=>{
+map[item.name]=(map[item.name]||0)+item.qty;
+});
+});
+
+let topItem="";
+let max=0;
+
+for(let key in map){
+if(map[key]>max){
+max=map[key];
+topItem=key;
+}
+}
+
+if(topItem===""){
+alert("No sales yet");
+}else{
+alert("Best Seller: "+topItem+" (Sold: "+max+")");
+}
+
+}
+
+};
+  
+initApp();
+
+</script>
+</body>
+</html>
